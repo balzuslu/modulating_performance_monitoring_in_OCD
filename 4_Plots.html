@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Plots</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/anchor-sections-1.0/anchor-sections.css" rel="stylesheet" />
+<script src="site_libs/anchor-sections-1.0/anchor-sections.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+<link rel="stylesheet" href="web_style.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+}
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Modulating Performance Monitoring in OCD</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="0_Project_and_Data_Description.html">
+    <span class="glyphicon glyphicon-info-sign"></span>
+     
+    Project &amp; Data
+  </a>
+</li>
+<li>
+  <a href="1_Participants.html">
+    <span class="glyphicon glyphicon-info-sign"></span>
+     
+    Participants
+  </a>
+</li>
+<li>
+  <a href="2_Behavioral_Data.html">
+    <span class="glyphicon glyphicon glyphicon glyphicon-hand-up"></span>
+     
+    Behavioral Data
+  </a>
+</li>
+<li>
+  <a href="3_ERP_Data.html">
+    <span class="glyphicon glyphicon glyphicon glyphicon-flash"></span>
+     
+    ERP Data
+  </a>
+</li>
+<li>
+  <a href="4_Plots.html">
+    <span class="glyphicon glyphicon glyphicon glyphicon-stats"></span>
+     
+    Plots
+  </a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="mailto:luisa.balzus@gmail.com">
+    <span class="fa fa-envelope fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Plots</h1>
+
+</div>
+
+
+<!-- Set general settings -->
+<!-- Load and clean data -->
+<pre class="r"><code># Load data
+resp_locked_data &lt;- read.csv(file = &quot;./data/response_locked_data_for_plots.csv&quot;, header = TRUE)
+
+
+# Create relevant variables
+resp_locked_data &lt;- resp_locked_data %&gt;%
+  dplyr::mutate(
+    stimulation = factor(ifelse(
+      participant_id == &quot;C_01_T1&quot; | participant_id == &quot;C_02_T1&quot; | participant_id == &quot;C_03_T2&quot; |
+      participant_id == &quot;C_04_T2&quot; | participant_id == &quot;C_05_T1&quot; | participant_id == &quot;C_06_T2&quot; |
+      participant_id == &quot;C_07_T1&quot; | participant_id == &quot;C_08_T1&quot; | participant_id == &quot;C_09_T2&quot; |
+      participant_id == &quot;C_10_T2&quot; | participant_id == &quot;C_11_T2&quot; | participant_id == &quot;C_12_T2&quot; |
+      participant_id == &quot;C_13_T1&quot; | participant_id == &quot;C_15_T2&quot; | participant_id == &quot;C_16_T1&quot; |
+      participant_id == &quot;C_17_T2&quot; | participant_id == &quot;C_18_T2&quot; | participant_id == &quot;C_19_T1&quot; |
+      participant_id == &quot;C_20_T1&quot; | participant_id == &quot;C_21_T2&quot; | participant_id == &quot;C_22_T2&quot; |
+      participant_id == &quot;C_23_T1&quot; | participant_id == &quot;C_24_T1&quot; | participant_id == &quot;C_25_T1&quot; |
+      participant_id == &quot;C_26_T1&quot; | participant_id == &quot;C_27_T2&quot; | participant_id == &quot;C_28_T2&quot; |
+      participant_id == &quot;C_29_T1&quot; | participant_id == &quot;C_30_T2&quot; | participant_id == &quot;P_01_T1&quot; |
+      participant_id == &quot;P_02_T2&quot; | participant_id == &quot;P_03_T2&quot; | participant_id == &quot;P_04_T1&quot; |
+      participant_id == &quot;P_05_T1&quot; | participant_id == &quot;P_06_T1&quot; | participant_id == &quot;P_07_T2&quot; |
+      participant_id == &quot;P_08_T2&quot; | participant_id == &quot;P_09_T2&quot; | participant_id == &quot;P_10_T1&quot; |
+      participant_id == &quot;P_11_T2&quot; | participant_id == &quot;P_12_T2&quot; | participant_id == &quot;P_13_T1&quot; |
+      participant_id == &quot;P_15_T1&quot; | participant_id == &quot;P_16_T1&quot; | participant_id == &quot;P_17_T2&quot; |
+      participant_id == &quot;P_18_T1&quot; | participant_id == &quot;P_19_T1&quot; | participant_id == &quot;P_20_T2&quot; |
+      participant_id == &quot;P_21_T2&quot; | participant_id == &quot;P_22_T1&quot; | participant_id == &quot;P_23_T1&quot; |
+      participant_id == &quot;P_24_T2&quot; | participant_id == &quot;P_25_T1&quot; | participant_id == &quot;P_26_T2&quot; |
+      participant_id == &quot;P_27_T1&quot; | participant_id == &quot;P_28_T2&quot; | participant_id == &quot;P_29_T2&quot; |
+      participant_id == &quot;P_30_T1&quot;, &quot;sham&quot;, &quot;verum&quot;)),
+    condition = factor(ifelse(condition == 1, &quot;correct&quot;, &quot;incorrect&quot;), 
+                       levels = c(&quot;incorrect&quot;, &quot;correct&quot;)),
+    group          = factor(ifelse(substr(participant_id, 1, 1) == &quot;C&quot;, &quot;HC&quot;, &quot;OCD&quot;)),
+    session        = factor(ifelse(substr(participant_id, 6, 7) == &quot;T1&quot;, &quot;T1&quot;, &quot;T2&quot;)),
+    participant_id = factor(substr(participant_id, 1, 4)), # to get correct no. of factor levels
+    condition      = factor(condition, levels = c(&quot;incorrect&quot;, &quot;correct&quot;)),
+  )
+
+
+# Exclude P_02 and C_02
+resp_locked_data &lt;- resp_locked_data[resp_locked_data$participant_id != &quot;P_02&quot; &amp;
+                                     resp_locked_data$participant_id != &quot;C_02&quot;, ]
+resp_locked_data$participant_id &lt;- droplevels(resp_locked_data$participant_id)
+
+
+# Calculate running within-participant CIs for ERN/CRN
+running_CIs_MFN &lt;- resp_locked_data %&gt;%
+  split(.$time) %&gt;%
+  map(~ summarySEwithinO(data        = .,
+                         measurevar  = &quot;FCz&quot;,
+                         withinvars  = c(&quot;condition&quot;, &quot;stimulation&quot;),
+                         betweenvars = &quot;group&quot;,
+                         idvar       = &quot;participant_id&quot;))
+
+CIs_MFN &lt;- purrr::map_df(running_CIs_MFN, magrittr::extract) %&gt;%
+  dplyr::mutate(
+    time = rep(unique(resp_locked_data$time), each = 8)
+  ) # Note. 8 refers to  no. of conditions (group x stimulation x resp_type = 2 x 2 x 2 = 8)
+
+
+# Calculate running within-participant CIs for Pe
+running_CIs_Pe &lt;- resp_locked_data %&gt;%
+  split(.$time) %&gt;%
+  map(~ summarySEwithinO(data        = .,
+                         measurevar  = &quot;Pz&quot;,
+                         withinvars  = c(&quot;condition&quot;, &quot;stimulation&quot;),
+                         betweenvars = &quot;group&quot;,
+                         idvar       = &quot;participant_id&quot;))
+
+CIs_Pe &lt;- purrr::map_df(running_CIs_Pe, magrittr::extract) %&gt;%
+  dplyr::mutate(
+    time = rep(unique(resp_locked_data$time), each = 8)
+  )
+
+
+# Convert to long format for electrodes for ERN/CRN
+data_topo_MFN &lt;- resp_locked_data %&gt;%
+  # Remove channels of no interest
+  dplyr::select(-IO1, -M1, -F9, -F10) %&gt;%
+  # Change from wide to long format for electrodes
+  tidyr::gather(., electrode, amplitude, Fp1:O2, factor_key = TRUE)  %&gt;%
+  # Select time windows
+  dplyr::filter(time &gt;= 0 &amp; time &lt;= 100) %&gt;%
+  # Add electrode information
+  electrode_locations(., electrode = &quot;electrode&quot;, drop = FALSE, montage = NULL)
+
+
+# Convert to long format for electrodes for Pe
+data_topo_Pe &lt;- resp_locked_data %&gt;%
+  # Remove channels of no interest
+  dplyr::select(-IO1, -M1, -F9, -F10) %&gt;%
+  # Change from wide to long format for electrodes
+  tidyr::gather(., electrode, amplitude, Fp1:O2, factor_key = TRUE)  %&gt;%
+  # Select time windows
+  dplyr::filter(time &gt;= 200 &amp; time &lt;= 400) %&gt;%
+  # Add electrode information
+  electrode_locations(., electrode = &quot;electrode&quot;, drop = FALSE, montage = NULL)</code></pre>
+<!-- Create plots -->
+<pre class="r"><code>#### Create plots of predicted means ####
+
+# Load LMM output
+LMM_ERN &lt;- readRDS(file = &quot;./saved_objects_for_plots/LMM_ERN.rds&quot;)
+LMM_CRN &lt;- readRDS(file = &quot;./saved_objects_for_plots/LMM_CRN.rds&quot;)
+LMM_Pe  &lt;- readRDS(file = &quot;./saved_objects_for_plots/LMM_Pe.rds&quot;)
+
+
+# ERN
+plot_LMM_ERN &lt;- plot_model(LMM_ERN, type = &quot;pred&quot;, terms  = c(&quot;group&quot;, &quot;stimulation&quot;),
+                           ci.lvl = .95, title = &quot;&quot;, dodge = 0.4, line.size = .5) +
+  labs(x  = &quot;&quot;, y = &quot;Predicted ERN Amplitude (µV)&quot;) +
+  my_figure_theme +
+  aes(color = group) +
+  scale_color_manual(name = &quot;tDCS&quot;, labels = c(&quot;sham&quot;, &quot;cathodal&quot;), values = colors_ERN) +
+  coord_cartesian(ylim = c(-9, 3), xlim = c(0.5, 2.5)) +
+  scale_y_continuous(breaks = seq(-9, 3, 2), expand = c(0, 0)) +
+  scale_x_continuous(labels = c(&quot;HC&quot;, &quot;OCD&quot;), breaks = c(1, 2), expand = c(0, 0)) +
+  theme(axis.ticks.x = element_blank(), legend.position = &quot;none&quot;)
+
+
+# CRN
+plot_LMM_CRN &lt;- plot_model(LMM_CRN, type = &quot;pred&quot;, terms  = c(&quot;group&quot;, &quot;stimulation&quot;),
+                           ci.lvl = .95, title = &quot;&quot;, dodge = 0.4, line.size = .5) +
+  labs(x  = &quot;&quot;, y = &quot;Predicted CRN Amplitude (µV)&quot;) +
+  my_figure_theme +
+  aes(color = group) +
+  scale_color_manual(name = &quot;tDCS&quot;, labels = c(&quot;sham&quot;, &quot;cathodal&quot;), values = colors_CRN) +
+  coord_cartesian(ylim = c(1, 9), xlim = c(0.5, 2.5)) +
+  scale_y_continuous(breaks = seq(1, 9, 2), expand = c(0, 0))  +
+  scale_x_continuous(labels = c(&quot;HC&quot;, &quot;OCD&quot;), breaks = c(1, 2), expand = c(0, 0)) +
+  theme(axis.ticks.x = element_blank(), legend.position = &quot;none&quot;)
+
+
+# Pe
+plot_LMM_Pe &lt;- plot_model(LMM_Pe,type = &quot;pred&quot;, terms  = c(&quot;group&quot;, &quot;stimulation&quot;),
+                          ci.lvl = .95, title = &quot;&quot;, dodge = 0.4, line.size = .5) +
+  labs(x  = &quot;&quot;, y = &quot;Predicted Pe Amplitude (µV)&quot;) +
+  my_figure_theme +
+  aes(color = group) +
+  scale_color_manual(name = &quot;tDCS&quot;, labels = c(&quot;sham&quot;, &quot;cathodal&quot;), values = colors_Pe) +
+  coord_cartesian(ylim = c(5.8, 14), xlim = c(0.5, 2.5)) +
+  scale_y_continuous(breaks = seq(6, 14, 2), expand = c(0, 0)) +
+  scale_x_continuous(labels = c(&quot;HC&quot;, &quot;OCD&quot;), breaks = c(1, 2), expand = c(0, 0)) +
+  theme(axis.ticks.x = element_blank(), legend.position = &quot;none&quot;)
+
+
+#### Create boxplots with probability density plots ####
+
+# Load data
+load(file = &quot;./data/Single_Trial_Data.rda&quot;)
+
+
+# Exclude missing responses, RT outliers, and trials with ERP artifacts
+single_trial_data_clean &lt;- single_trial_data %&gt;%
+  dplyr::filter(
+      response_type != &quot;miss&quot; &amp;
+      rt_invalid    == FALSE &amp;
+      !is.na(MFN_0_100_FCz)
+  ) # (53093 of 53760 trials left)
+
+
+# Aggregate data
+data_aggregated &lt;- single_trial_data_clean %&gt;%
+  dplyr::group_by(participant_id, group, response_type, stimulation, session) %&gt;%
+  dplyr::summarize(
+    MFN = mean(MFN_0_100_FCz, na.rm = TRUE),
+    Pe  = mean(Pe_200_400_Pz, na.rm = TRUE)
+   )  %&gt;%
+  dplyr::ungroup()
+
+
+# ERN
+plot_box_density_ERN &lt;- ggplot() +
+  geom_flat_violin(data = data_aggregated[data_aggregated$response_type == &quot;incorrect&quot;, ],
+                   aes(x = group, y = MFN, fill = stimulation), 
+                   position = position_nudge(x = .2, y = 0),
+                   adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  geom_boxplot(data = data_aggregated[data_aggregated$response_type == &quot;incorrect&quot;, ],
+               aes(x = group, y = MFN, fill = stimulation), 
+               position = position_dodge(width = 0.3),
+               outlier.shape = NA, width = .2, alpha = .8, colour = &quot;black&quot;) +
+  scale_fill_manual(values = colors_ERN, name = &quot;tDCS:&quot;) +
+  labs(x = &quot;&quot;, y = &quot;ERN Amplitude (µV)&quot;) +
+  coord_cartesian(ylim = c(-35, 25), xlim = c(1.15, 2.25)) +
+  scale_y_continuous(breaks = seq(-35, 25, 10), expand = c(0, 0)) +
+  my_figure_theme  +
+  theme(legend.position = &quot;none&quot;, axis.ticks.x = element_blank())
+
+
+# CRN
+plot_box_density_CRN &lt;- ggplot() +
+  geom_flat_violin(data = data_aggregated[data_aggregated$response_type == &quot;correct&quot;, ],
+                   aes(x = group, y = MFN, fill = stimulation), 
+                   position = position_nudge(x = .2, y = 0),
+                   adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  geom_boxplot(data = data_aggregated[data_aggregated$response_type == &quot;correct&quot;, ],
+               aes(x = group, y = MFN, fill = stimulation), 
+               position = position_dodge(width = 0.3),
+               outlier.shape = NA, width = .2, colour = &quot;black&quot;) +
+  scale_fill_manual(values = colors_CRN, name = &quot;tDCS:&quot;) +
+  labs(x = &quot;&quot;, y = &quot;CRN Amplitude (µV)&quot;) +
+  coord_cartesian(ylim = c(-15, 25), xlim = c(1.15, 2.25)) +
+  scale_y_continuous(breaks = seq(-15, 25, 10), expand = c(0, 0)) +
+  my_figure_theme  +
+  theme(legend.position = &quot;none&quot;, axis.ticks.x = element_blank(), 
+        axis.title.y = element_text(vjust = -1))
+
+
+# Pe
+plot_box_density_Pe &lt;- ggplot() +
+  geom_flat_violin(data = data_aggregated[data_aggregated$response_type == &quot;incorrect&quot;, ],
+                   aes(x = group, y = Pe, fill = stimulation), 
+                   position = position_nudge(x = .2, y = 0),
+                   adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  geom_boxplot(data = data_aggregated[data_aggregated$response_type == &quot;incorrect&quot;, ],
+               aes(x = group, y = Pe, fill = stimulation), 
+               position = position_dodge(width = 0.3),
+               outlier.shape = NA, width = .2, colour = &quot;black&quot;) +
+  scale_fill_manual(values = colors_Pe, name = &quot;tDCS:&quot;) +
+  labs(x = &quot;&quot;, y = &quot;Pe Amplitude (µV)&quot;) +
+  coord_cartesian(ylim = c(-10, 30), xlim = c(1.15, 2.25)) +
+  scale_y_continuous(breaks = seq(-10, 30, 10), expand = c(0, 0)) +
+  my_figure_theme  +
+  theme(legend.position = &quot;none&quot;, axis.ticks.x = element_blank(), 
+        axis.title.y = element_text(vjust = -.5))
+
+
+#### Create waveform plots ####
+
+# Define facet labels
+group.labs &lt;- c(&quot;Healthy Control Participants &quot;, &quot;Patients With OCD&quot;)
+names(group.labs) &lt;- c(&quot;HC&quot;, &quot;OCD&quot;)
+
+
+# Define electrode labels
+label_FCz &lt;- data.frame(time = -320, FCz = 11.5, lab = &quot;Text&quot;, group = factor(&quot;HC&quot;, levels = c(&quot;HC&quot;, &quot;OCD&quot;)))
+label_Pz  &lt;- data.frame(time = -320, Pz  = 11.6, lab = &quot;Text&quot;, group = factor(&quot;HC&quot;, levels = c(&quot;HC&quot;, &quot;OCD&quot;)))
+
+
+# ERN/CRN
+plot_waveform_MFN &lt;- ggplot(resp_locked_data, aes(time, FCz)) +
+  stat_summary(fun = mean, geom = &quot;line&quot;, size = 0.5, linetype = &quot;solid&quot;, aes(colour = condition:stimulation)) +
+  geom_ribbon(data = CIs_MFN, aes(ymin = FCz - ci, ymax = FCz + ci, fill = condition:stimulation), alpha = 0.2) +
+  guides(fill = &quot;none&quot;) +
+  geom_segment(aes(x = 0, xend = 0, y = -10, yend = 12), linetype = &quot;dotted&quot;, colour = &quot;grey50&quot;) + # Add vline
+  geom_segment(aes(x = -400, xend = 800, y = 0, yend = 0), linetype = &quot;dotted&quot;, colour = &quot;grey50&quot;) + # Add hline
+  geom_text(data = label_FCz, label = &quot;FCz&quot;) + # 
+  annotate(&quot;rect&quot;, xmin = 0, xmax = 100, ymin = -10, ymax = 12, alpha = .2, fill = &quot;grey50&quot;) + # Add shaded time area
+  coord_cartesian(ylim = c(-10, 12), xlim = c(-400, 800)) +
+  scale_y_continuous(breaks = seq(-10, 12, 2), expand = c(0, 0)) +
+  scale_x_continuous(breaks = seq(-400, 800, 200), expand = c(0, 0)) +
+  scale_colour_manual(values = c(colors_ERN, colors_CRN), 
+                      labels = c(&quot;Error: Sham&quot;, &quot;Error: Cathodal&quot;, &quot;Correct: Sham&quot;, &quot;Correct: Cathodal&quot;),
+                      guide = guide_legend(override.aes = list(size = 1.3))) + # Thickness legend lines
+  scale_fill_manual(values = c(colors_ERN, colors_CRN)) +
+  labs(x = &quot;Time (ms)&quot;, y = expression(paste(&quot;Amplitude (&quot;, mu, &quot;V)&quot;))) +
+  facet_rep_grid(cols = vars(group), labeller = labeller(group = group.labs), repeat.tick.labels = TRUE) +
+  my_figure_theme +
+  theme(strip.text.x = element_text(margin = margin(0, 0, 4, 0, &quot;cm&quot;), size = 12, face = &quot;bold&quot;),
+        axis.title.y = element_text(vjust = -1.5), panel.spacing = unit(0.75, &quot;cm&quot;),
+        legend.title = element_blank(), legend.text = element_text(size = 11))
+
+
+# Pe
+plot_waveform_Pe &lt;- ggplot(resp_locked_data[resp_locked_data$condition == &quot;incorrect&quot;, ], aes(time, Pz)) +
+  stat_summary(fun = mean, geom = &quot;line&quot;, size = 0.5, linetype = &quot;solid&quot;, aes(colour = condition:stimulation)) +
+  geom_ribbon(data = CIs_Pe[CIs_Pe$condition == &quot;incorrect&quot;, ], 
+              aes(ymin = Pz - ci, ymax = Pz + ci, fill = condition:stimulation), alpha = 0.2) +
+  guides(fill = &quot;none&quot;) +
+  geom_segment(aes(x = 0, xend = 0, y = -2, yend = 12), linetype = &quot;dotted&quot;, colour = &quot;grey50&quot;) +
+  geom_segment(aes(x = -400, xend = 800, y = 0, yend = 0), linetype = &quot;dotted&quot;, colour = &quot;grey50&quot;) +
+  geom_text(data = label_Pz, label = &quot;Pz&quot;) +
+  annotate(&quot;rect&quot;, xmin = 200, xmax = 400, ymin = -2, ymax = 12, alpha = .2, fill = &quot;grey50&quot;) +
+  coord_cartesian(ylim = c(-2, 12), xlim = c(-400, 800)) +
+  scale_y_continuous(breaks = seq(-2, 12, 2), expand = c(0, 0)) +
+  scale_x_continuous(breaks = seq(-400, 800, 200), expand = c(0, 0)) +
+  scale_colour_manual(values = colors_Pe, 
+                      labels = c(&quot;Error: Sham&quot;, &quot;Error: Cathodal&quot;),
+                      guide = guide_legend(override.aes = list(size = 1.3))) +
+  scale_fill_manual(values = colors_Pe) +
+  labs(x = &quot;Time (ms)&quot;, y = expression(paste(&quot;Amplitude (&quot;, mu, &quot;V)&quot;))) +
+  facet_rep_grid(cols = vars(group), labeller = labeller(group = group.labs), repeat.tick.labels = TRUE) +
+  my_figure_theme +
+  theme(strip.text.x = element_text(margin = margin(0, 0, 3.5, 0, &quot;cm&quot;), size = 11, face = &quot;bold&quot;), 
+        axis.title.y = element_text(vjust = -1.5), panel.spacing = unit(0.75, &quot;cm&quot;),
+        legend.title = element_blank(), legend.text = element_text(size = 11))
+
+
+# Get legend and remove individual legends from plot to create common legend
+legend_MFN        &lt;- get_legend(plot_waveform_MFN)
+legend_Pe         &lt;- get_legend(plot_waveform_Pe)
+plot_waveform_MFN &lt;- plot_waveform_MFN + theme(legend.position = &quot;none&quot;)
+plot_waveform_Pe  &lt;- plot_waveform_Pe  + theme(legend.position = &quot;none&quot;)
+
+
+#### Create topography plots ####
+
+# Define facet labels
+stimulation.labs_incorr &lt;- c(&quot;Error: Sham&quot;, &quot;Error: Cathodal&quot;)
+names(stimulation.labs_incorr) &lt;- c(&quot;sham&quot;, &quot;verum&quot;)
+
+stimulation.labs_corr &lt;- c(&quot;Correct: Sham&quot;, &quot;Correct: Cathodal&quot;)
+names(stimulation.labs_corr) &lt;- c(&quot;sham&quot;, &quot;verum&quot;)
+
+
+# ERN HC
+plot_topo_HC_ERN &lt;- ggplot(data_topo_MFN[data_topo_MFN$group == &quot;HC&quot; &amp; data_topo_MFN$condition == &quot;incorrect&quot;, ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = &quot;head&quot;, chan_markers = &quot;point&quot;, chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = &quot;RdBu&quot;, limits = c(-5.1, 6.5), breaks = c(-5, 0, 5)) + #
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, &quot;V&quot;))) +
+  theme(legend.position = &quot;bottom&quot;, legend.text = element_text(size = 7, color = &quot;grey30&quot;),
+        legend.title = element_text(size = 7, color = &quot;grey30&quot;), legend.key.height = unit(0.25, &#39;cm&#39;),
+        legend.key.width = unit(0.25, &#39;cm&#39;), strip.text.x = element_text(size = 7)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_incorr))
+
+
+# ERN OCD
+plot_topo_OCD_ERN &lt;- ggplot(data_topo_MFN[data_topo_MFN$group == &quot;OCD&quot; &amp; data_topo_MFN$condition == &quot;incorrect&quot;, ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = &quot;head&quot;, chan_markers = &quot;point&quot;, chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = &quot;RdBu&quot;, limits = c(-5.1, 6.5), breaks = c(-5, 0, 5)) + #
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, &quot;V&quot;))) +
+  theme(legend.position = &quot;bottom&quot;, legend.text = element_text(size = 7, color = &quot;grey30&quot;),
+        legend.title = element_text(size = 7, color = &quot;grey30&quot;), legend.key.height = unit(0.25, &#39;cm&#39;),
+        legend.key.width = unit(0.25, &#39;cm&#39;), strip.text.x = element_text(size = 7)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_incorr))
+
+
+# CRN HC
+plot_topo_HC_CRN &lt;- ggplot(data_topo_MFN[data_topo_MFN$group == &quot;HC&quot; &amp; data_topo_MFN$condition == &quot;correct&quot;, ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = &quot;head&quot;, chan_markers = &quot;point&quot;, chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = &quot;RdBu&quot;, limits = c(0.5, 11.7), breaks = c(2, 6, 10)) + #
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, &quot;V&quot;))) +
+  theme(legend.position = &quot;bottom&quot;, legend.text = element_text(size = 7, color = &quot;grey30&quot;),
+        legend.title = element_text(size = 7, color = &quot;grey30&quot;), legend.key.height = unit(0.25, &#39;cm&#39;),
+        legend.key.width = unit(0.25, &#39;cm&#39;), strip.text.x = element_text(size = 7)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_corr))
+
+
+# CRN OCD
+plot_topo_OCD_CRN &lt;- ggplot(data_topo_MFN[data_topo_MFN$group == &quot;OCD&quot; &amp; data_topo_MFN$condition == &quot;correct&quot;, ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = &quot;head&quot;, chan_markers = &quot;point&quot;, chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = &quot;RdBu&quot;, limits = c(0.5, 11.7), breaks = c(2, 6, 10)) + #
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, &quot;V&quot;))) +
+  theme(legend.position = &quot;bottom&quot;, legend.text = element_text(size = 7, color = &quot;grey30&quot;),
+        legend.title = element_text(size = 7, color = &quot;grey30&quot;), legend.key.height = unit(0.25, &#39;cm&#39;),
+        legend.key.width = unit(0.25, &#39;cm&#39;), strip.text.x = element_text(size = 7)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_corr))
+
+
+# Pe HC
+plot_topo_HC_Pe &lt;- ggplot(data_topo_Pe[data_topo_Pe$group == &quot;HC&quot; &amp; data_topo_Pe$condition == &quot;incorrect&quot;, ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = &quot;head&quot;, chan_markers = &quot;point&quot;, chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = &quot;RdBu&quot;, limits = c(2, 10.4)) + 
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, &quot;V&quot;))) +
+  theme(legend.position = &quot;bottom&quot;, legend.text = element_text(size = 7, color = &quot;grey30&quot;),
+        legend.title = element_text(size = 7, color = &quot;grey30&quot;), legend.key.height = unit(0.25, &#39;cm&#39;),
+        legend.key.width = unit(0.25, &#39;cm&#39;), strip.text.x = element_text(size = 6.5)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_incorr))
+
+
+# Pe OCD
+plot_topo_OCD_Pe &lt;- ggplot(data_topo_Pe[data_topo_Pe$group == &quot;OCD&quot; &amp; data_topo_Pe$condition == &quot;incorrect&quot;, ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = &quot;head&quot;, chan_markers = &quot;point&quot;, chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = &quot;RdBu&quot;, limits = c(2, 10.4)) + 
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, &quot;V&quot;))) +
+  theme(legend.position = &quot;bottom&quot;, legend.text = element_text(size = 7, color = &quot;grey30&quot;),
+        legend.title = element_text(size = 7, color = &quot;grey30&quot;), legend.key.height = unit(0.25, &#39;cm&#39;),
+        legend.key.width = unit(0.25, &#39;cm&#39;), strip.text.x = element_text(size = 6.5)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_incorr))</code></pre>
+<div id="ern-crn" class="section level2">
+<h2>ERN &amp; CRN</h2>
+<hr />
+<p>This figure corresponds to Figure 1 in the manuscript.</p>
+<pre class="r"><code># Overlay waveforms and topopgraphy plots
+aligned_plots1_MFN &lt;- align_plots(plot_waveform_MFN, plot_topo_HC_ERN,  axis = &quot;tr&quot;)
+aligned_plots2_MFN &lt;- align_plots(plot_waveform_MFN, plot_topo_HC_CRN,  axis = &quot;tr&quot;)
+aligned_plots3_MFN &lt;- align_plots(plot_waveform_MFN, plot_topo_OCD_ERN, axis = &quot;tr&quot;)
+aligned_plots4_MFN &lt;- align_plots(plot_waveform_MFN, plot_topo_OCD_CRN, axis = &quot;tr&quot;)
+
+
+# Arrange plots
+figure_ERN_CRN &lt;- ggdraw() +
+  draw_plot(aligned_plots1_MFN[[1]],  x =  0,   y = .42,  width = .99, height = .56) +
+  draw_plot(aligned_plots1_MFN[[2]],  x = .073, y = .795, width = .2,  height = .15) +
+  draw_plot(aligned_plots2_MFN[[2]],  x = .293, y = .795, width = .2,  height = .15) +
+  draw_plot(aligned_plots3_MFN[[2]],  x = .563, y = .795, width = .2,  height = .15) +
+  draw_plot(aligned_plots4_MFN[[2]],  x = .783, y = .795, width = .2,  height = .15) +
+  draw_plot(legend_MFN,               x = .318, y = .4,   width = .4,  height = .01) +
+  draw_plot(plot_box_density_ERN,     x = .01,  y = .04,  width = .3,  height = .29) +
+  draw_plot(plot_LMM_ERN,             x = .6,   y = .04,  width = .2,  height = .32) +
+  draw_plot(plot_box_density_CRN,     x = .3,   y = .04,  width = .3,  height = .29) +
+  draw_plot(plot_LMM_CRN,             x = .8,   y = .04,  width = .2,  height = .32) +
+  draw_plot(legend_MFN,               x = .318, y = .035, width = .4,  height = .01) +
+  draw_plot_label(c(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;), c(0, 0, .59), c(1, .36, .36), size = 15)
+figure_ERN_CRN</code></pre>
+<div class="figure">
+<img src="4_Plots_files/figure-html/arrange-plots-ERN-CRN-1.png" alt="Note. (A) Response-locked grand average waveforms with 95% confidence intervals (CIs) for correct and incorrect responses at electrode site FCz in the sham and cathodal tDCS condition for patients with OCD and HC participants, along with topographies of ERN and CRN (0–100 ms). Gray-shaded areas in the waveform plots indicate the time window used for ERN and CRN quantification. (B) ERN and CRN mean amplitude values per group and tDCS condition are presented as boxplots and probability density plots based on raw data. (C) Predicted ERN and CRN mean amplitude values by group and tDCS condition, calculated as partial effects from linear mixed models. Error bars represent 95% CIs." width="4800" />
+<p class="caption">
+Note. (A) Response-locked grand average waveforms with 95% confidence intervals (CIs) for correct and incorrect responses at electrode site FCz in the sham and cathodal tDCS condition for patients with OCD and HC participants, along with topographies of ERN and CRN (0–100 ms). Gray-shaded areas in the waveform plots indicate the time window used for ERN and CRN quantification. (B) ERN and CRN mean amplitude values per group and tDCS condition are presented as boxplots and probability density plots based on raw data. (C) Predicted ERN and CRN mean amplitude values by group and tDCS condition, calculated as partial effects from linear mixed models. Error bars represent 95% CIs.
+</p>
+</div>
+<pre class="r"><code># Save plot
+ggsave(plot = figure_ERN_CRN, &quot;./figures/figure_ERN_CRN.tiff&quot;, width = 20, height = 24,
+       units = &quot;cm&quot;, dpi = 600, compression = &quot;lzw&quot;)</code></pre>
+<p><br><br></p>
+</div>
+<div id="pe" class="section level2">
+<h2>Pe</h2>
+<hr />
+<p>This figure corresponds to Figure 2 in the manuscript.</p>
+<pre class="r"><code># Overlay waveforms and tpopgraphy plots
+aligned_plots1_Pe  &lt;- align_plots(plot_waveform_Pe, plot_topo_HC_Pe,  axis = &quot;tr&quot;)
+aligned_plots2_Pe  &lt;- align_plots(plot_waveform_Pe, plot_topo_OCD_Pe, axis = &quot;tr&quot;)
+
+
+# Arrange plots
+figure_Pe &lt;- ggdraw() +
+  draw_plot(aligned_plots1_Pe[[1]], x =  0,   y = .05,  width = .765, height = .92) +
+  draw_plot(aligned_plots1_Pe[[2]], x = .07,  y = .664, width = .3,   height = .22) +
+  draw_plot(aligned_plots2_Pe[[2]], x = .447, y = .664, width = .3,   height = .22) +
+  draw_plot(plot_box_density_Pe,    x = .77,  y = .48,  width = .25,  height = .47) +
+  draw_plot(plot_LMM_Pe,            x = .774, y = .05,  width = .25,  height = .48) +
+  draw_plot(legend_Pe,              x = .3,   y = .01,  width = .2,   height = .01) +
+  draw_plot_label(c(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;), c(0, .75, .75), c(1, 1, .58), size = 15)
+figure_Pe</code></pre>
+<div class="figure">
+<img src="4_Plots_files/figure-html/arrange-plots-Pe-1.png" alt="Note. (A) Response-locked grand average waveforms with 95% confidence intervals (CIs) for incorrect responses at electrode site Pz in the sham and cathodal tDCS condition for patients with OCD and HC participants, along with topographies of the Pe (200–400 ms). Gray-shaded areas in the waveform plots indicate the time window used for Pe quantification. (B) Pe mean amplitude values per group and tDCS condition are presented as boxplots and probability density plots based on raw data. (C) Predicted Pe mean amplitude values by group and tDCS condition, calculated as partial effects from linear mixed models. Error bars represent 95% CIs." width="4800" />
+<p class="caption">
+Note. (A) Response-locked grand average waveforms with 95% confidence intervals (CIs) for incorrect responses at electrode site Pz in the sham and cathodal tDCS condition for patients with OCD and HC participants, along with topographies of the Pe (200–400 ms). Gray-shaded areas in the waveform plots indicate the time window used for Pe quantification. (B) Pe mean amplitude values per group and tDCS condition are presented as boxplots and probability density plots based on raw data. (C) Predicted Pe mean amplitude values by group and tDCS condition, calculated as partial effects from linear mixed models. Error bars represent 95% CIs.
+</p>
+</div>
+<pre class="r"><code># Save plot
+ggsave(plot = figure_Pe, &quot;./figures/figure_Pe.tiff&quot;, width = 20, height = 12,
+       units = &quot;cm&quot;, dpi = 600, compression = &quot;lzw&quot;)</code></pre>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlBsb3RzIg0Kb3V0cHV0OiANCiAgaHRtbF9kb2N1bWVudA0KLS0tDQoNCjwhLS0gU2V0IGdlbmVyYWwgc2V0dGluZ3MgLS0+DQoNCmBgYHtyIHNldHVwLCBpbmNsdWRlID0gRkFMU0V9DQoNCiMgU2V0IGdlbmVyYWwgc2V0dGluZ3MgZm9yIG1hcmtkb3duIGZpbGUNCmtuaXRyOjpvcHRzX2NodW5rJHNldCgNCiAgbWVzc2FnZSA9IEZBTFNFLA0KICB3YXJuaW5nID0gRkFMU0UsDQogIGNvbW1lbnQgPSAiIiwNCiAgcmVzdWx0cyA9ICJob2xkIg0KKQ0KDQoNCiMgQ2xlYXIgZW52aXJvbm1lbnQNCnJtKGxpc3QgPSBscygpKQ0KDQoNCiMgRW5hYmxlL2Rpc2FibGUgY2FjaGluZyBvZiB0aW1lLWNvbnN1bWluZyBjb2RlIGNodW5rcw0Ka25pdHJfY2FjaGVfZW5hYmxlZCA9IFRSVUUNCg0KDQojIExvYWQgcGFja2FnZXMNCmxpYnJhcnkoZHBseXIpICAgICAgIyBmb3IgZGF0YSBtYW5pcHVsYXRpb24NCmxpYnJhcnkoZ2dwbG90MikgICAgIyBmb3IgcGxvdHRpbmcNCmxpYnJhcnkoY293cGxvdCkgICAgIyBmb3IgYXJyYW5naW5nIHBsb3RzDQpsaWJyYXJ5KHB1cnJyKSAgICAgICMgZm9yIGNhbGN1bGF0aW5nIHdpdGhpbi1wYXJ0aWNpcGFudCBDSXMNCmxpYnJhcnkoZWVnVXRpbHMpICAgIyBmb3IgcGxvdHRpbmcgdG9wb2dyYXBoaWVzDQpsaWJyYXJ5KHRpZHlyKSAgICAgICMgZm9yIGdhdGhlciBmdW5jdGlvbg0KbGlicmFyeShzalBsb3QpICAgICAjIGZvciBwbG90X21vZGVsIGZ1bmN0aW9uDQpsaWJyYXJ5KGxlbW9uKSAgICAgICMgZm9yIGZ1bmN0aW9uIGZhY2V0X3JlcF9ncmlkLCB0byByZXBlYXQgeSBheGlzIGluIGZhY2V0cw0KDQoNCiMgTG9hZCBmdW5jdGlvbnMNCnNvdXJjZSgiLi9mdW5jdGlvbnMvc3VtbWFyeVNFd2l0aGluTy5SIikgICMgRnVuY3Rpb24gcHJvdmlkZWQgYnkgUi1jb29rYm9vazogaHR0cDovL3d3dy5jb29rYm9vay1yLmNvbS9HcmFwaHMvUGxvdHRpbmdfbWVhbnNfYW5kX2Vycm9yX2JhcnNfKGdncGxvdDIpLw0Kc291cmNlKCIuL2Z1bmN0aW9ucy9SX3JhaW5jbG91ZHMuUiIpICAgICAgIyBGdW5jdGlvbiB0byBjcmVhdGUgcmFpbmNsb3VkIHBsb3RzIA0KDQoNCiMgRGVmaW5lIGZ1bmN0aW9uIHRvIGNyZWF0ZSBjb21tb24gbGVnZW5kIChmcm9tIGh0dHA6Ly93d3cuc3RoZGEuY29tL2VuZ2xpc2gvd2lraS93aWtpLnBocD9pZF9jb250ZW50cz03OTMwI2FkZC1hLWNvbW1vbi1sZWdlbmQtZm9yLW11bHRpcGxlLWdncGxvdDItZ3JhcGhzKQ0KZ2V0X2xlZ2VuZCA8LSBmdW5jdGlvbihteWdncGxvdCkgew0KICB0bXAgICAgICA8LSBnZ3Bsb3RfZ3RhYmxlKGdncGxvdF9idWlsZChteWdncGxvdCkpDQogIGxlZyAgICAgIDwtIHdoaWNoKHNhcHBseSh0bXAkZ3JvYnMsIGZ1bmN0aW9uKHgpIHgkbmFtZSkgPT0gImd1aWRlLWJveCIpDQogIGxlZ2VuZCAgIDwtIHRtcCRncm9ic1tbbGVnXV0NCiAgcmV0dXJuKGxlZ2VuZCkNCn0NCg0KDQojIFNldCBmaWd1cmUgdGhlbWUNCm15X2ZpZ3VyZV90aGVtZSA8LSB0aGVtZV9jbGFzc2ljKGJhc2Vfc2l6ZSA9IDExKSArIA0KICB0aGVtZShsZWdlbmQucG9zaXRpb24gPSAiYm90dG9tIiwNCiAgICAgICAgc3RyaXAuYmFja2dyb3VuZCA9IGVsZW1lbnRfYmxhbmsoKSwNCiAgICAgICAgcGxvdC50aXRsZSA9IGVsZW1lbnRfdGV4dChoanVzdCA9IDAuNSkpDQoNCg0KIyBTZXQgZmlndXJlIGNvbG9ycw0KY29sb3JzX0VSTiA8LSBjKCJyb3lhbGJsdWUxIiwgIm5hdnkiKQ0KY29sb3JzX0NSTiA8LSBjKCJ0YW4xIiwgInNpZW5uYTMiKQ0KY29sb3JzX1BlICA8LSBjKCJkYXJrb2xpdmVncmVlbjMiLCAic2VhZ3JlZW4iKQ0KYGBgDQoNCjwhLS0gTG9hZCBhbmQgY2xlYW4gZGF0YSAtLT4NCg0KYGBge3IgbG9hZC1hbmQtY2xlYW4tZGF0YX0NCg0KIyBMb2FkIGRhdGENCnJlc3BfbG9ja2VkX2RhdGEgPC0gcmVhZC5jc3YoZmlsZSA9ICIuL2RhdGEvcmVzcG9uc2VfbG9ja2VkX2RhdGFfZm9yX3Bsb3RzLmNzdiIsIGhlYWRlciA9IFRSVUUpDQoNCg0KIyBDcmVhdGUgcmVsZXZhbnQgdmFyaWFibGVzDQpyZXNwX2xvY2tlZF9kYXRhIDwtIHJlc3BfbG9ja2VkX2RhdGEgJT4lDQogIGRwbHlyOjptdXRhdGUoDQogICAgc3RpbXVsYXRpb24gPSBmYWN0b3IoaWZlbHNlKA0KICAgICAgcGFydGljaXBhbnRfaWQgPT0gIkNfMDFfVDEiIHwgcGFydGljaXBhbnRfaWQgPT0gIkNfMDJfVDEiIHwgcGFydGljaXBhbnRfaWQgPT0gIkNfMDNfVDIiIHwNCiAgICAgIHBhcnRpY2lwYW50X2lkID09ICJDXzA0X1QyIiB8IHBhcnRpY2lwYW50X2lkID09ICJDXzA1X1QxIiB8IHBhcnRpY2lwYW50X2lkID09ICJDXzA2X1QyIiB8DQogICAgICBwYXJ0aWNpcGFudF9pZCA9PSAiQ18wN19UMSIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiQ18wOF9UMSIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiQ18wOV9UMiIgfA0KICAgICAgcGFydGljaXBhbnRfaWQgPT0gIkNfMTBfVDIiIHwgcGFydGljaXBhbnRfaWQgPT0gIkNfMTFfVDIiIHwgcGFydGljaXBhbnRfaWQgPT0gIkNfMTJfVDIiIHwNCiAgICAgIHBhcnRpY2lwYW50X2lkID09ICJDXzEzX1QxIiB8IHBhcnRpY2lwYW50X2lkID09ICJDXzE1X1QyIiB8IHBhcnRpY2lwYW50X2lkID09ICJDXzE2X1QxIiB8DQogICAgICBwYXJ0aWNpcGFudF9pZCA9PSAiQ18xN19UMiIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiQ18xOF9UMiIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiQ18xOV9UMSIgfA0KICAgICAgcGFydGljaXBhbnRfaWQgPT0gIkNfMjBfVDEiIHwgcGFydGljaXBhbnRfaWQgPT0gIkNfMjFfVDIiIHwgcGFydGljaXBhbnRfaWQgPT0gIkNfMjJfVDIiIHwNCiAgICAgIHBhcnRpY2lwYW50X2lkID09ICJDXzIzX1QxIiB8IHBhcnRpY2lwYW50X2lkID09ICJDXzI0X1QxIiB8IHBhcnRpY2lwYW50X2lkID09ICJDXzI1X1QxIiB8DQogICAgICBwYXJ0aWNpcGFudF9pZCA9PSAiQ18yNl9UMSIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiQ18yN19UMiIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiQ18yOF9UMiIgfA0KICAgICAgcGFydGljaXBhbnRfaWQgPT0gIkNfMjlfVDEiIHwgcGFydGljaXBhbnRfaWQgPT0gIkNfMzBfVDIiIHwgcGFydGljaXBhbnRfaWQgPT0gIlBfMDFfVDEiIHwNCiAgICAgIHBhcnRpY2lwYW50X2lkID09ICJQXzAyX1QyIiB8IHBhcnRpY2lwYW50X2lkID09ICJQXzAzX1QyIiB8IHBhcnRpY2lwYW50X2lkID09ICJQXzA0X1QxIiB8DQogICAgICBwYXJ0aWNpcGFudF9pZCA9PSAiUF8wNV9UMSIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiUF8wNl9UMSIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiUF8wN19UMiIgfA0KICAgICAgcGFydGljaXBhbnRfaWQgPT0gIlBfMDhfVDIiIHwgcGFydGljaXBhbnRfaWQgPT0gIlBfMDlfVDIiIHwgcGFydGljaXBhbnRfaWQgPT0gIlBfMTBfVDEiIHwNCiAgICAgIHBhcnRpY2lwYW50X2lkID09ICJQXzExX1QyIiB8IHBhcnRpY2lwYW50X2lkID09ICJQXzEyX1QyIiB8IHBhcnRpY2lwYW50X2lkID09ICJQXzEzX1QxIiB8DQogICAgICBwYXJ0aWNpcGFudF9pZCA9PSAiUF8xNV9UMSIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiUF8xNl9UMSIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiUF8xN19UMiIgfA0KICAgICAgcGFydGljaXBhbnRfaWQgPT0gIlBfMThfVDEiIHwgcGFydGljaXBhbnRfaWQgPT0gIlBfMTlfVDEiIHwgcGFydGljaXBhbnRfaWQgPT0gIlBfMjBfVDIiIHwNCiAgICAgIHBhcnRpY2lwYW50X2lkID09ICJQXzIxX1QyIiB8IHBhcnRpY2lwYW50X2lkID09ICJQXzIyX1QxIiB8IHBhcnRpY2lwYW50X2lkID09ICJQXzIzX1QxIiB8DQogICAgICBwYXJ0aWNpcGFudF9pZCA9PSAiUF8yNF9UMiIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiUF8yNV9UMSIgfCBwYXJ0aWNpcGFudF9pZCA9PSAiUF8yNl9UMiIgfA0KICAgICAgcGFydGljaXBhbnRfaWQgPT0gIlBfMjdfVDEiIHwgcGFydGljaXBhbnRfaWQgPT0gIlBfMjhfVDIiIHwgcGFydGljaXBhbnRfaWQgPT0gIlBfMjlfVDIiIHwNCiAgICAgIHBhcnRpY2lwYW50X2lkID09ICJQXzMwX1QxIiwgInNoYW0iLCAidmVydW0iKSksDQogICAgY29uZGl0aW9uID0gZmFjdG9yKGlmZWxzZShjb25kaXRpb24gPT0gMSwgImNvcnJlY3QiLCAiaW5jb3JyZWN0IiksIA0KICAgICAgICAgICAgICAgICAgICAgICBsZXZlbHMgPSBjKCJpbmNvcnJlY3QiLCAiY29ycmVjdCIpKSwNCiAgICBncm91cCAgICAgICAgICA9IGZhY3RvcihpZmVsc2Uoc3Vic3RyKHBhcnRpY2lwYW50X2lkLCAxLCAxKSA9PSAiQyIsICJIQyIsICJPQ0QiKSksDQogICAgc2Vzc2lvbiAgICAgICAgPSBmYWN0b3IoaWZlbHNlKHN1YnN0cihwYXJ0aWNpcGFudF9pZCwgNiwgNykgPT0gIlQxIiwgIlQxIiwgIlQyIikpLA0KICAgIHBhcnRpY2lwYW50X2lkID0gZmFjdG9yKHN1YnN0cihwYXJ0aWNpcGFudF9pZCwgMSwgNCkpLCAjIHRvIGdldCBjb3JyZWN0IG5vLiBvZiBmYWN0b3IgbGV2ZWxzDQogICAgY29uZGl0aW9uICAgICAgPSBmYWN0b3IoY29uZGl0aW9uLCBsZXZlbHMgPSBjKCJpbmNvcnJlY3QiLCAiY29ycmVjdCIpKSwNCiAgKQ0KDQoNCiMgRXhjbHVkZSBQXzAyIGFuZCBDXzAyDQpyZXNwX2xvY2tlZF9kYXRhIDwtIHJlc3BfbG9ja2VkX2RhdGFbcmVzcF9sb2NrZWRfZGF0YSRwYXJ0aWNpcGFudF9pZCAhPSAiUF8wMiIgJg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHJlc3BfbG9ja2VkX2RhdGEkcGFydGljaXBhbnRfaWQgIT0gIkNfMDIiLCBdDQpyZXNwX2xvY2tlZF9kYXRhJHBhcnRpY2lwYW50X2lkIDwtIGRyb3BsZXZlbHMocmVzcF9sb2NrZWRfZGF0YSRwYXJ0aWNpcGFudF9pZCkNCg0KDQojIENhbGN1bGF0ZSBydW5uaW5nIHdpdGhpbi1wYXJ0aWNpcGFudCBDSXMgZm9yIEVSTi9DUk4NCnJ1bm5pbmdfQ0lzX01GTiA8LSByZXNwX2xvY2tlZF9kYXRhICU+JQ0KICBzcGxpdCguJHRpbWUpICU+JQ0KICBtYXAofiBzdW1tYXJ5U0V3aXRoaW5PKGRhdGEgICAgICAgID0gLiwNCiAgICAgICAgICAgICAgICAgICAgICAgICBtZWFzdXJldmFyICA9ICJGQ3oiLA0KICAgICAgICAgICAgICAgICAgICAgICAgIHdpdGhpbnZhcnMgID0gYygiY29uZGl0aW9uIiwgInN0aW11bGF0aW9uIiksDQogICAgICAgICAgICAgICAgICAgICAgICAgYmV0d2VlbnZhcnMgPSAiZ3JvdXAiLA0KICAgICAgICAgICAgICAgICAgICAgICAgIGlkdmFyICAgICAgID0gInBhcnRpY2lwYW50X2lkIikpDQoNCkNJc19NRk4gPC0gcHVycnI6Om1hcF9kZihydW5uaW5nX0NJc19NRk4sIG1hZ3JpdHRyOjpleHRyYWN0KSAlPiUNCiAgZHBseXI6Om11dGF0ZSgNCiAgICB0aW1lID0gcmVwKHVuaXF1ZShyZXNwX2xvY2tlZF9kYXRhJHRpbWUpLCBlYWNoID0gOCkNCiAgKSAjIE5vdGUuIDggcmVmZXJzIHRvICBuby4gb2YgY29uZGl0aW9ucyAoZ3JvdXAgeCBzdGltdWxhdGlvbiB4IHJlc3BfdHlwZSA9IDIgeCAyIHggMiA9IDgpDQoNCg0KIyBDYWxjdWxhdGUgcnVubmluZyB3aXRoaW4tcGFydGljaXBhbnQgQ0lzIGZvciBQZQ0KcnVubmluZ19DSXNfUGUgPC0gcmVzcF9sb2NrZWRfZGF0YSAlPiUNCiAgc3BsaXQoLiR0aW1lKSAlPiUNCiAgbWFwKH4gc3VtbWFyeVNFd2l0aGluTyhkYXRhICAgICAgICA9IC4sDQogICAgICAgICAgICAgICAgICAgICAgICAgbWVhc3VyZXZhciAgPSAiUHoiLA0KICAgICAgICAgICAgICAgICAgICAgICAgIHdpdGhpbnZhcnMgID0gYygiY29uZGl0aW9uIiwgInN0aW11bGF0aW9uIiksDQogICAgICAgICAgICAgICAgICAgICAgICAgYmV0d2VlbnZhcnMgPSAiZ3JvdXAiLA0KICAgICAgICAgICAgICAgICAgICAgICAgIGlkdmFyICAgICAgID0gInBhcnRpY2lwYW50X2lkIikpDQoNCkNJc19QZSA8LSBwdXJycjo6bWFwX2RmKHJ1bm5pbmdfQ0lzX1BlLCBtYWdyaXR0cjo6ZXh0cmFjdCkgJT4lDQogIGRwbHlyOjptdXRhdGUoDQogICAgdGltZSA9IHJlcCh1bmlxdWUocmVzcF9sb2NrZWRfZGF0YSR0aW1lKSwgZWFjaCA9IDgpDQogICkNCg0KDQojIENvbnZlcnQgdG8gbG9uZyBmb3JtYXQgZm9yIGVsZWN0cm9kZXMgZm9yIEVSTi9DUk4NCmRhdGFfdG9wb19NRk4gPC0gcmVzcF9sb2NrZWRfZGF0YSAlPiUNCiAgIyBSZW1vdmUgY2hhbm5lbHMgb2Ygbm8gaW50ZXJlc3QNCiAgZHBseXI6OnNlbGVjdCgtSU8xLCAtTTEsIC1GOSwgLUYxMCkgJT4lDQogICMgQ2hhbmdlIGZyb20gd2lkZSB0byBsb25nIGZvcm1hdCBmb3IgZWxlY3Ryb2Rlcw0KICB0aWR5cjo6Z2F0aGVyKC4sIGVsZWN0cm9kZSwgYW1wbGl0dWRlLCBGcDE6TzIsIGZhY3Rvcl9rZXkgPSBUUlVFKSAgJT4lDQogICMgU2VsZWN0IHRpbWUgd2luZG93cw0KICBkcGx5cjo6ZmlsdGVyKHRpbWUgPj0gMCAmIHRpbWUgPD0gMTAwKSAlPiUNCiAgIyBBZGQgZWxlY3Ryb2RlIGluZm9ybWF0aW9uDQogIGVsZWN0cm9kZV9sb2NhdGlvbnMoLiwgZWxlY3Ryb2RlID0gImVsZWN0cm9kZSIsIGRyb3AgPSBGQUxTRSwgbW9udGFnZSA9IE5VTEwpDQoNCg0KIyBDb252ZXJ0IHRvIGxvbmcgZm9ybWF0IGZvciBlbGVjdHJvZGVzIGZvciBQZQ0KZGF0YV90b3BvX1BlIDwtIHJlc3BfbG9ja2VkX2RhdGEgJT4lDQogICMgUmVtb3ZlIGNoYW5uZWxzIG9mIG5vIGludGVyZXN0DQogIGRwbHlyOjpzZWxlY3QoLUlPMSwgLU0xLCAtRjksIC1GMTApICU+JQ0KICAjIENoYW5nZSBmcm9tIHdpZGUgdG8gbG9uZyBmb3JtYXQgZm9yIGVsZWN0cm9kZXMNCiAgdGlkeXI6OmdhdGhlciguLCBlbGVjdHJvZGUsIGFtcGxpdHVkZSwgRnAxOk8yLCBmYWN0b3Jfa2V5ID0gVFJVRSkgICU+JQ0KICAjIFNlbGVjdCB0aW1lIHdpbmRvd3MNCiAgZHBseXI6OmZpbHRlcih0aW1lID49IDIwMCAmIHRpbWUgPD0gNDAwKSAlPiUNCiAgIyBBZGQgZWxlY3Ryb2RlIGluZm9ybWF0aW9uDQogIGVsZWN0cm9kZV9sb2NhdGlvbnMoLiwgZWxlY3Ryb2RlID0gImVsZWN0cm9kZSIsIGRyb3AgPSBGQUxTRSwgbW9udGFnZSA9IE5VTEwpDQpgYGANCg0KPCEtLSBDcmVhdGUgcGxvdHMgLS0+DQoNCmBgYHtyIGNyZWF0ZS1wbG90c30NCg0KIyMjIyBDcmVhdGUgcGxvdHMgb2YgcHJlZGljdGVkIG1lYW5zICMjIyMNCg0KIyBMb2FkIExNTSBvdXRwdXQNCkxNTV9FUk4gPC0gcmVhZFJEUyhmaWxlID0gIi4vc2F2ZWRfb2JqZWN0c19mb3JfcGxvdHMvTE1NX0VSTi5yZHMiKQ0KTE1NX0NSTiA8LSByZWFkUkRTKGZpbGUgPSAiLi9zYXZlZF9vYmplY3RzX2Zvcl9wbG90cy9MTU1fQ1JOLnJkcyIpDQpMTU1fUGUgIDwtIHJlYWRSRFMoZmlsZSA9ICIuL3NhdmVkX29iamVjdHNfZm9yX3Bsb3RzL0xNTV9QZS5yZHMiKQ0KDQoNCiMgRVJODQpwbG90X0xNTV9FUk4gPC0gcGxvdF9tb2RlbChMTU1fRVJOLCB0eXBlID0gInByZWQiLCB0ZXJtcyAgPSBjKCJncm91cCIsICJzdGltdWxhdGlvbiIpLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgY2kubHZsID0gLjk1LCB0aXRsZSA9ICIiLCBkb2RnZSA9IDAuNCwgbGluZS5zaXplID0gLjUpICsNCiAgbGFicyh4ICA9ICIiLCB5ID0gIlByZWRpY3RlZCBFUk4gQW1wbGl0dWRlICjCtVYpIikgKw0KICBteV9maWd1cmVfdGhlbWUgKw0KICBhZXMoY29sb3IgPSBncm91cCkgKw0KICBzY2FsZV9jb2xvcl9tYW51YWwobmFtZSA9ICJ0RENTIiwgbGFiZWxzID0gYygic2hhbSIsICJjYXRob2RhbCIpLCB2YWx1ZXMgPSBjb2xvcnNfRVJOKSArDQogIGNvb3JkX2NhcnRlc2lhbih5bGltID0gYygtOSwgMyksIHhsaW0gPSBjKDAuNSwgMi41KSkgKw0KICBzY2FsZV95X2NvbnRpbnVvdXMoYnJlYWtzID0gc2VxKC05LCAzLCAyKSwgZXhwYW5kID0gYygwLCAwKSkgKw0KICBzY2FsZV94X2NvbnRpbnVvdXMobGFiZWxzID0gYygiSEMiLCAiT0NEIiksIGJyZWFrcyA9IGMoMSwgMiksIGV4cGFuZCA9IGMoMCwgMCkpICsNCiAgdGhlbWUoYXhpcy50aWNrcy54ID0gZWxlbWVudF9ibGFuaygpLCBsZWdlbmQucG9zaXRpb24gPSAibm9uZSIpDQoNCg0KIyBDUk4NCnBsb3RfTE1NX0NSTiA8LSBwbG90X21vZGVsKExNTV9DUk4sIHR5cGUgPSAicHJlZCIsIHRlcm1zICA9IGMoImdyb3VwIiwgInN0aW11bGF0aW9uIiksDQogICAgICAgICAgICAgICAgICAgICAgICAgICBjaS5sdmwgPSAuOTUsIHRpdGxlID0gIiIsIGRvZGdlID0gMC40LCBsaW5lLnNpemUgPSAuNSkgKw0KICBsYWJzKHggID0gIiIsIHkgPSAiUHJlZGljdGVkIENSTiBBbXBsaXR1ZGUgKMK1VikiKSArDQogIG15X2ZpZ3VyZV90aGVtZSArDQogIGFlcyhjb2xvciA9IGdyb3VwKSArDQogIHNjYWxlX2NvbG9yX21hbnVhbChuYW1lID0gInREQ1MiLCBsYWJlbHMgPSBjKCJzaGFtIiwgImNhdGhvZGFsIiksIHZhbHVlcyA9IGNvbG9yc19DUk4pICsNCiAgY29vcmRfY2FydGVzaWFuKHlsaW0gPSBjKDEsIDkpLCB4bGltID0gYygwLjUsIDIuNSkpICsNCiAgc2NhbGVfeV9jb250aW51b3VzKGJyZWFrcyA9IHNlcSgxLCA5LCAyKSwgZXhwYW5kID0gYygwLCAwKSkgICsNCiAgc2NhbGVfeF9jb250aW51b3VzKGxhYmVscyA9IGMoIkhDIiwgIk9DRCIpLCBicmVha3MgPSBjKDEsIDIpLCBleHBhbmQgPSBjKDAsIDApKSArDQogIHRoZW1lKGF4aXMudGlja3MueCA9IGVsZW1lbnRfYmxhbmsoKSwgbGVnZW5kLnBvc2l0aW9uID0gIm5vbmUiKQ0KDQoNCiMgUGUNCnBsb3RfTE1NX1BlIDwtIHBsb3RfbW9kZWwoTE1NX1BlLHR5cGUgPSAicHJlZCIsIHRlcm1zICA9IGMoImdyb3VwIiwgInN0aW11bGF0aW9uIiksDQogICAgICAgICAgICAgICAgICAgICAgICAgIGNpLmx2bCA9IC45NSwgdGl0bGUgPSAiIiwgZG9kZ2UgPSAwLjQsIGxpbmUuc2l6ZSA9IC41KSArDQogIGxhYnMoeCAgPSAiIiwgeSA9ICJQcmVkaWN0ZWQgUGUgQW1wbGl0dWRlICjCtVYpIikgKw0KICBteV9maWd1cmVfdGhlbWUgKw0KICBhZXMoY29sb3IgPSBncm91cCkgKw0KICBzY2FsZV9jb2xvcl9tYW51YWwobmFtZSA9ICJ0RENTIiwgbGFiZWxzID0gYygic2hhbSIsICJjYXRob2RhbCIpLCB2YWx1ZXMgPSBjb2xvcnNfUGUpICsNCiAgY29vcmRfY2FydGVzaWFuKHlsaW0gPSBjKDUuOCwgMTQpLCB4bGltID0gYygwLjUsIDIuNSkpICsNCiAgc2NhbGVfeV9jb250aW51b3VzKGJyZWFrcyA9IHNlcSg2LCAxNCwgMiksIGV4cGFuZCA9IGMoMCwgMCkpICsNCiAgc2NhbGVfeF9jb250aW51b3VzKGxhYmVscyA9IGMoIkhDIiwgIk9DRCIpLCBicmVha3MgPSBjKDEsIDIpLCBleHBhbmQgPSBjKDAsIDApKSArDQogIHRoZW1lKGF4aXMudGlja3MueCA9IGVsZW1lbnRfYmxhbmsoKSwgbGVnZW5kLnBvc2l0aW9uID0gIm5vbmUiKQ0KDQoNCiMjIyMgQ3JlYXRlIGJveHBsb3RzIHdpdGggcHJvYmFiaWxpdHkgZGVuc2l0eSBwbG90cyAjIyMjDQoNCiMgTG9hZCBkYXRhDQpsb2FkKGZpbGUgPSAiLi9kYXRhL1NpbmdsZV9UcmlhbF9EYXRhLnJkYSIpDQoNCg0KIyBFeGNsdWRlIG1pc3NpbmcgcmVzcG9uc2VzLCBSVCBvdXRsaWVycywgYW5kIHRyaWFscyB3aXRoIEVSUCBhcnRpZmFjdHMNCnNpbmdsZV90cmlhbF9kYXRhX2NsZWFuIDwtIHNpbmdsZV90cmlhbF9kYXRhICU+JQ0KICBkcGx5cjo6ZmlsdGVyKA0KICAgICAgcmVzcG9uc2VfdHlwZSAhPSAibWlzcyIgJg0KICAgICAgcnRfaW52YWxpZCAgICA9PSBGQUxTRSAmDQogICAgICAhaXMubmEoTUZOXzBfMTAwX0ZDeikNCiAgKSAjICg1MzA5MyBvZiA1Mzc2MCB0cmlhbHMgbGVmdCkNCg0KDQojIEFnZ3JlZ2F0ZSBkYXRhDQpkYXRhX2FnZ3JlZ2F0ZWQgPC0gc2luZ2xlX3RyaWFsX2RhdGFfY2xlYW4gJT4lDQogIGRwbHlyOjpncm91cF9ieShwYXJ0aWNpcGFudF9pZCwgZ3JvdXAsIHJlc3BvbnNlX3R5cGUsIHN0aW11bGF0aW9uLCBzZXNzaW9uKSAlPiUNCiAgZHBseXI6OnN1bW1hcml6ZSgNCiAgICBNRk4gPSBtZWFuKE1GTl8wXzEwMF9GQ3osIG5hLnJtID0gVFJVRSksDQogICAgUGUgID0gbWVhbihQZV8yMDBfNDAwX1B6LCBuYS5ybSA9IFRSVUUpDQogICApICAlPiUNCiAgZHBseXI6OnVuZ3JvdXAoKQ0KDQoNCiMgRVJODQpwbG90X2JveF9kZW5zaXR5X0VSTiA8LSBnZ3Bsb3QoKSArDQogIGdlb21fZmxhdF92aW9saW4oZGF0YSA9IGRhdGFfYWdncmVnYXRlZFtkYXRhX2FnZ3JlZ2F0ZWQkcmVzcG9uc2VfdHlwZSA9PSAiaW5jb3JyZWN0IiwgXSwNCiAgICAgICAgICAgICAgICAgICBhZXMoeCA9IGdyb3VwLCB5ID0gTUZOLCBmaWxsID0gc3RpbXVsYXRpb24pLCANCiAgICAgICAgICAgICAgICAgICBwb3NpdGlvbiA9IHBvc2l0aW9uX251ZGdlKHggPSAuMiwgeSA9IDApLA0KICAgICAgICAgICAgICAgICAgIGFkanVzdCA9IDEuNSwgdHJpbSA9IEZBTFNFLCBhbHBoYSA9IC41LCBjb2xvdXIgPSBOQSkgKw0KICBnZW9tX2JveHBsb3QoZGF0YSA9IGRhdGFfYWdncmVnYXRlZFtkYXRhX2FnZ3JlZ2F0ZWQkcmVzcG9uc2VfdHlwZSA9PSAiaW5jb3JyZWN0IiwgXSwNCiAgICAgICAgICAgICAgIGFlcyh4ID0gZ3JvdXAsIHkgPSBNRk4sIGZpbGwgPSBzdGltdWxhdGlvbiksIA0KICAgICAgICAgICAgICAgcG9zaXRpb24gPSBwb3NpdGlvbl9kb2RnZSh3aWR0aCA9IDAuMyksDQogICAgICAgICAgICAgICBvdXRsaWVyLnNoYXBlID0gTkEsIHdpZHRoID0gLjIsIGFscGhhID0gLjgsIGNvbG91ciA9ICJibGFjayIpICsNCiAgc2NhbGVfZmlsbF9tYW51YWwodmFsdWVzID0gY29sb3JzX0VSTiwgbmFtZSA9ICJ0RENTOiIpICsNCiAgbGFicyh4ID0gIiIsIHkgPSAiRVJOIEFtcGxpdHVkZSAowrVWKSIpICsNCiAgY29vcmRfY2FydGVzaWFuKHlsaW0gPSBjKC0zNSwgMjUpLCB4bGltID0gYygxLjE1LCAyLjI1KSkgKw0KICBzY2FsZV95X2NvbnRpbnVvdXMoYnJlYWtzID0gc2VxKC0zNSwgMjUsIDEwKSwgZXhwYW5kID0gYygwLCAwKSkgKw0KICBteV9maWd1cmVfdGhlbWUgICsNCiAgdGhlbWUobGVnZW5kLnBvc2l0aW9uID0gIm5vbmUiLCBheGlzLnRpY2tzLnggPSBlbGVtZW50X2JsYW5rKCkpDQoNCg0KIyBDUk4NCnBsb3RfYm94X2RlbnNpdHlfQ1JOIDwtIGdncGxvdCgpICsNCiAgZ2VvbV9mbGF0X3Zpb2xpbihkYXRhID0gZGF0YV9hZ2dyZWdhdGVkW2RhdGFfYWdncmVnYXRlZCRyZXNwb25zZV90eXBlID09ICJjb3JyZWN0IiwgXSwNCiAgICAgICAgICAgICAgICAgICBhZXMoeCA9IGdyb3VwLCB5ID0gTUZOLCBmaWxsID0gc3RpbXVsYXRpb24pLCANCiAgICAgICAgICAgICAgICAgICBwb3NpdGlvbiA9IHBvc2l0aW9uX251ZGdlKHggPSAuMiwgeSA9IDApLA0KICAgICAgICAgICAgICAgICAgIGFkanVzdCA9IDEuNSwgdHJpbSA9IEZBTFNFLCBhbHBoYSA9IC41LCBjb2xvdXIgPSBOQSkgKw0KICBnZW9tX2JveHBsb3QoZGF0YSA9IGRhdGFfYWdncmVnYXRlZFtkYXRhX2FnZ3JlZ2F0ZWQkcmVzcG9uc2VfdHlwZSA9PSAiY29ycmVjdCIsIF0sDQogICAgICAgICAgICAgICBhZXMoeCA9IGdyb3VwLCB5ID0gTUZOLCBmaWxsID0gc3RpbXVsYXRpb24pLCANCiAgICAgICAgICAgICAgIHBvc2l0aW9uID0gcG9zaXRpb25fZG9kZ2Uod2lkdGggPSAwLjMpLA0KICAgICAgICAgICAgICAgb3V0bGllci5zaGFwZSA9IE5BLCB3aWR0aCA9IC4yLCBjb2xvdXIgPSAiYmxhY2siKSArDQogIHNjYWxlX2ZpbGxfbWFudWFsKHZhbHVlcyA9IGNvbG9yc19DUk4sIG5hbWUgPSAidERDUzoiKSArDQogIGxhYnMoeCA9ICIiLCB5ID0gIkNSTiBBbXBsaXR1ZGUgKMK1VikiKSArDQogIGNvb3JkX2NhcnRlc2lhbih5bGltID0gYygtMTUsIDI1KSwgeGxpbSA9IGMoMS4xNSwgMi4yNSkpICsNCiAgc2NhbGVfeV9jb250aW51b3VzKGJyZWFrcyA9IHNlcSgtMTUsIDI1LCAxMCksIGV4cGFuZCA9IGMoMCwgMCkpICsNCiAgbXlfZmlndXJlX3RoZW1lICArDQogIHRoZW1lKGxlZ2VuZC5wb3NpdGlvbiA9ICJub25lIiwgYXhpcy50aWNrcy54ID0gZWxlbWVudF9ibGFuaygpLCANCiAgICAgICAgYXhpcy50aXRsZS55ID0gZWxlbWVudF90ZXh0KHZqdXN0ID0gLTEpKQ0KDQoNCiMgUGUNCnBsb3RfYm94X2RlbnNpdHlfUGUgPC0gZ2dwbG90KCkgKw0KICBnZW9tX2ZsYXRfdmlvbGluKGRhdGEgPSBkYXRhX2FnZ3JlZ2F0ZWRbZGF0YV9hZ2dyZWdhdGVkJHJlc3BvbnNlX3R5cGUgPT0gImluY29ycmVjdCIsIF0sDQogICAgICAgICAgICAgICAgICAgYWVzKHggPSBncm91cCwgeSA9IFBlLCBmaWxsID0gc3RpbXVsYXRpb24pLCANCiAgICAgICAgICAgICAgICAgICBwb3NpdGlvbiA9IHBvc2l0aW9uX251ZGdlKHggPSAuMiwgeSA9IDApLA0KICAgICAgICAgICAgICAgICAgIGFkanVzdCA9IDEuNSwgdHJpbSA9IEZBTFNFLCBhbHBoYSA9IC41LCBjb2xvdXIgPSBOQSkgKw0KICBnZW9tX2JveHBsb3QoZGF0YSA9IGRhdGFfYWdncmVnYXRlZFtkYXRhX2FnZ3JlZ2F0ZWQkcmVzcG9uc2VfdHlwZSA9PSAiaW5jb3JyZWN0IiwgXSwNCiAgICAgICAgICAgICAgIGFlcyh4ID0gZ3JvdXAsIHkgPSBQZSwgZmlsbCA9IHN0aW11bGF0aW9uKSwgDQogICAgICAgICAgICAgICBwb3NpdGlvbiA9IHBvc2l0aW9uX2RvZGdlKHdpZHRoID0gMC4zKSwNCiAgICAgICAgICAgICAgIG91dGxpZXIuc2hhcGUgPSBOQSwgd2lkdGggPSAuMiwgY29sb3VyID0gImJsYWNrIikgKw0KICBzY2FsZV9maWxsX21hbnVhbCh2YWx1ZXMgPSBjb2xvcnNfUGUsIG5hbWUgPSAidERDUzoiKSArDQogIGxhYnMoeCA9ICIiLCB5ID0gIlBlIEFtcGxpdHVkZSAowrVWKSIpICsNCiAgY29vcmRfY2FydGVzaWFuKHlsaW0gPSBjKC0xMCwgMzApLCB4bGltID0gYygxLjE1LCAyLjI1KSkgKw0KICBzY2FsZV95X2NvbnRpbnVvdXMoYnJlYWtzID0gc2VxKC0xMCwgMzAsIDEwKSwgZXhwYW5kID0gYygwLCAwKSkgKw0KICBteV9maWd1cmVfdGhlbWUgICsNCiAgdGhlbWUobGVnZW5kLnBvc2l0aW9uID0gIm5vbmUiLCBheGlzLnRpY2tzLnggPSBlbGVtZW50X2JsYW5rKCksIA0KICAgICAgICBheGlzLnRpdGxlLnkgPSBlbGVtZW50X3RleHQodmp1c3QgPSAtLjUpKQ0KDQoNCiMjIyMgQ3JlYXRlIHdhdmVmb3JtIHBsb3RzICMjIyMNCg0KIyBEZWZpbmUgZmFjZXQgbGFiZWxzDQpncm91cC5sYWJzIDwtIGMoIkhlYWx0aHkgQ29udHJvbCBQYXJ0aWNpcGFudHMgIiwgIlBhdGllbnRzIFdpdGggT0NEIikNCm5hbWVzKGdyb3VwLmxhYnMpIDwtIGMoIkhDIiwgIk9DRCIpDQoNCg0KIyBEZWZpbmUgZWxlY3Ryb2RlIGxhYmVscw0KbGFiZWxfRkN6IDwtIGRhdGEuZnJhbWUodGltZSA9IC0zMjAsIEZDeiA9IDExLjUsIGxhYiA9ICJUZXh0IiwgZ3JvdXAgPSBmYWN0b3IoIkhDIiwgbGV2ZWxzID0gYygiSEMiLCAiT0NEIikpKQ0KbGFiZWxfUHogIDwtIGRhdGEuZnJhbWUodGltZSA9IC0zMjAsIFB6ICA9IDExLjYsIGxhYiA9ICJUZXh0IiwgZ3JvdXAgPSBmYWN0b3IoIkhDIiwgbGV2ZWxzID0gYygiSEMiLCAiT0NEIikpKQ0KDQoNCiMgRVJOL0NSTg0KcGxvdF93YXZlZm9ybV9NRk4gPC0gZ2dwbG90KHJlc3BfbG9ja2VkX2RhdGEsIGFlcyh0aW1lLCBGQ3opKSArDQogIHN0YXRfc3VtbWFyeShmdW4gPSBtZWFuLCBnZW9tID0gImxpbmUiLCBzaXplID0gMC41LCBsaW5ldHlwZSA9ICJzb2xpZCIsIGFlcyhjb2xvdXIgPSBjb25kaXRpb246c3RpbXVsYXRpb24pKSArDQogIGdlb21fcmliYm9uKGRhdGEgPSBDSXNfTUZOLCBhZXMoeW1pbiA9IEZDeiAtIGNpLCB5bWF4ID0gRkN6ICsgY2ksIGZpbGwgPSBjb25kaXRpb246c3RpbXVsYXRpb24pLCBhbHBoYSA9IDAuMikgKw0KICBndWlkZXMoZmlsbCA9ICJub25lIikgKw0KICBnZW9tX3NlZ21lbnQoYWVzKHggPSAwLCB4ZW5kID0gMCwgeSA9IC0xMCwgeWVuZCA9IDEyKSwgbGluZXR5cGUgPSAiZG90dGVkIiwgY29sb3VyID0gImdyZXk1MCIpICsgIyBBZGQgdmxpbmUNCiAgZ2VvbV9zZWdtZW50KGFlcyh4ID0gLTQwMCwgeGVuZCA9IDgwMCwgeSA9IDAsIHllbmQgPSAwKSwgbGluZXR5cGUgPSAiZG90dGVkIiwgY29sb3VyID0gImdyZXk1MCIpICsgIyBBZGQgaGxpbmUNCiAgZ2VvbV90ZXh0KGRhdGEgPSBsYWJlbF9GQ3osIGxhYmVsID0gIkZDeiIpICsgIyANCiAgYW5ub3RhdGUoInJlY3QiLCB4bWluID0gMCwgeG1heCA9IDEwMCwgeW1pbiA9IC0xMCwgeW1heCA9IDEyLCBhbHBoYSA9IC4yLCBmaWxsID0gImdyZXk1MCIpICsgIyBBZGQgc2hhZGVkIHRpbWUgYXJlYQ0KICBjb29yZF9jYXJ0ZXNpYW4oeWxpbSA9IGMoLTEwLCAxMiksIHhsaW0gPSBjKC00MDAsIDgwMCkpICsNCiAgc2NhbGVfeV9jb250aW51b3VzKGJyZWFrcyA9IHNlcSgtMTAsIDEyLCAyKSwgZXhwYW5kID0gYygwLCAwKSkgKw0KICBzY2FsZV94X2NvbnRpbnVvdXMoYnJlYWtzID0gc2VxKC00MDAsIDgwMCwgMjAwKSwgZXhwYW5kID0gYygwLCAwKSkgKw0KICBzY2FsZV9jb2xvdXJfbWFudWFsKHZhbHVlcyA9IGMoY29sb3JzX0VSTiwgY29sb3JzX0NSTiksIA0KICAgICAgICAgICAgICAgICAgICAgIGxhYmVscyA9IGMoIkVycm9yOiBTaGFtIiwgIkVycm9yOiBDYXRob2RhbCIsICJDb3JyZWN0OiBTaGFtIiwgIkNvcnJlY3Q6IENhdGhvZGFsIiksDQogICAgICAgICAgICAgICAgICAgICAgZ3VpZGUgPSBndWlkZV9sZWdlbmQob3ZlcnJpZGUuYWVzID0gbGlzdChzaXplID0gMS4zKSkpICsgIyBUaGlja25lc3MgbGVnZW5kIGxpbmVzDQogIHNjYWxlX2ZpbGxfbWFudWFsKHZhbHVlcyA9IGMoY29sb3JzX0VSTiwgY29sb3JzX0NSTikpICsNCiAgbGFicyh4ID0gIlRpbWUgKG1zKSIsIHkgPSBleHByZXNzaW9uKHBhc3RlKCJBbXBsaXR1ZGUgKCIsIG11LCAiVikiKSkpICsNCiAgZmFjZXRfcmVwX2dyaWQoY29scyA9IHZhcnMoZ3JvdXApLCBsYWJlbGxlciA9IGxhYmVsbGVyKGdyb3VwID0gZ3JvdXAubGFicyksIHJlcGVhdC50aWNrLmxhYmVscyA9IFRSVUUpICsNCiAgbXlfZmlndXJlX3RoZW1lICsNCiAgdGhlbWUoc3RyaXAudGV4dC54ID0gZWxlbWVudF90ZXh0KG1hcmdpbiA9IG1hcmdpbigwLCAwLCA0LCAwLCAiY20iKSwgc2l6ZSA9IDEyLCBmYWNlID0gImJvbGQiKSwNCiAgICAgICAgYXhpcy50aXRsZS55ID0gZWxlbWVudF90ZXh0KHZqdXN0ID0gLTEuNSksIHBhbmVsLnNwYWNpbmcgPSB1bml0KDAuNzUsICJjbSIpLA0KICAgICAgICBsZWdlbmQudGl0bGUgPSBlbGVtZW50X2JsYW5rKCksIGxlZ2VuZC50ZXh0ID0gZWxlbWVudF90ZXh0KHNpemUgPSAxMSkpDQoNCg0KIyBQZQ0KcGxvdF93YXZlZm9ybV9QZSA8LSBnZ3Bsb3QocmVzcF9sb2NrZWRfZGF0YVtyZXNwX2xvY2tlZF9kYXRhJGNvbmRpdGlvbiA9PSAiaW5jb3JyZWN0IiwgXSwgYWVzKHRpbWUsIFB6KSkgKw0KICBzdGF0X3N1bW1hcnkoZnVuID0gbWVhbiwgZ2VvbSA9ICJsaW5lIiwgc2l6ZSA9IDAuNSwgbGluZXR5cGUgPSAic29saWQiLCBhZXMoY29sb3VyID0gY29uZGl0aW9uOnN0aW11bGF0aW9uKSkgKw0KICBnZW9tX3JpYmJvbihkYXRhID0gQ0lzX1BlW0NJc19QZSRjb25kaXRpb24gPT0gImluY29ycmVjdCIsIF0sIA0KICAgICAgICAgICAgICBhZXMoeW1pbiA9IFB6IC0gY2ksIHltYXggPSBQeiArIGNpLCBmaWxsID0gY29uZGl0aW9uOnN0aW11bGF0aW9uKSwgYWxwaGEgPSAwLjIpICsNCiAgZ3VpZGVzKGZpbGwgPSAibm9uZSIpICsNCiAgZ2VvbV9zZWdtZW50KGFlcyh4ID0gMCwgeGVuZCA9IDAsIHkgPSAtMiwgeWVuZCA9IDEyKSwgbGluZXR5cGUgPSAiZG90dGVkIiwgY29sb3VyID0gImdyZXk1MCIpICsNCiAgZ2VvbV9zZWdtZW50KGFlcyh4ID0gLTQwMCwgeGVuZCA9IDgwMCwgeSA9IDAsIHllbmQgPSAwKSwgbGluZXR5cGUgPSAiZG90dGVkIiwgY29sb3VyID0gImdyZXk1MCIpICsNCiAgZ2VvbV90ZXh0KGRhdGEgPSBsYWJlbF9QeiwgbGFiZWwgPSAiUHoiKSArDQogIGFubm90YXRlKCJyZWN0IiwgeG1pbiA9IDIwMCwgeG1heCA9IDQwMCwgeW1pbiA9IC0yLCB5bWF4ID0gMTIsIGFscGhhID0gLjIsIGZpbGwgPSAiZ3JleTUwIikgKw0KICBjb29yZF9jYXJ0ZXNpYW4oeWxpbSA9IGMoLTIsIDEyKSwgeGxpbSA9IGMoLTQwMCwgODAwKSkgKw0KICBzY2FsZV95X2NvbnRpbnVvdXMoYnJlYWtzID0gc2VxKC0yLCAxMiwgMiksIGV4cGFuZCA9IGMoMCwgMCkpICsNCiAgc2NhbGVfeF9jb250aW51b3VzKGJyZWFrcyA9IHNlcSgtNDAwLCA4MDAsIDIwMCksIGV4cGFuZCA9IGMoMCwgMCkpICsNCiAgc2NhbGVfY29sb3VyX21hbnVhbCh2YWx1ZXMgPSBjb2xvcnNfUGUsIA0KICAgICAgICAgICAgICAgICAgICAgIGxhYmVscyA9IGMoIkVycm9yOiBTaGFtIiwgIkVycm9yOiBDYXRob2RhbCIpLA0KICAgICAgICAgICAgICAgICAgICAgIGd1aWRlID0gZ3VpZGVfbGVnZW5kKG92ZXJyaWRlLmFlcyA9IGxpc3Qoc2l6ZSA9IDEuMykpKSArDQogIHNjYWxlX2ZpbGxfbWFudWFsKHZhbHVlcyA9IGNvbG9yc19QZSkgKw0KICBsYWJzKHggPSAiVGltZSAobXMpIiwgeSA9IGV4cHJlc3Npb24ocGFzdGUoIkFtcGxpdHVkZSAoIiwgbXUsICJWKSIpKSkgKw0KICBmYWNldF9yZXBfZ3JpZChjb2xzID0gdmFycyhncm91cCksIGxhYmVsbGVyID0gbGFiZWxsZXIoZ3JvdXAgPSBncm91cC5sYWJzKSwgcmVwZWF0LnRpY2subGFiZWxzID0gVFJVRSkgKw0KICBteV9maWd1cmVfdGhlbWUgKw0KICB0aGVtZShzdHJpcC50ZXh0LnggPSBlbGVtZW50X3RleHQobWFyZ2luID0gbWFyZ2luKDAsIDAsIDMuNSwgMCwgImNtIiksIHNpemUgPSAxMSwgZmFjZSA9ICJib2xkIiksIA0KICAgICAgICBheGlzLnRpdGxlLnkgPSBlbGVtZW50X3RleHQodmp1c3QgPSAtMS41KSwgcGFuZWwuc3BhY2luZyA9IHVuaXQoMC43NSwgImNtIiksDQogICAgICAgIGxlZ2VuZC50aXRsZSA9IGVsZW1lbnRfYmxhbmsoKSwgbGVnZW5kLnRleHQgPSBlbGVtZW50X3RleHQoc2l6ZSA9IDExKSkNCg0KDQojIEdldCBsZWdlbmQgYW5kIHJlbW92ZSBpbmRpdmlkdWFsIGxlZ2VuZHMgZnJvbSBwbG90IHRvIGNyZWF0ZSBjb21tb24gbGVnZW5kDQpsZWdlbmRfTUZOICAgICAgICA8LSBnZXRfbGVnZW5kKHBsb3Rfd2F2ZWZvcm1fTUZOKQ0KbGVnZW5kX1BlICAgICAgICAgPC0gZ2V0X2xlZ2VuZChwbG90X3dhdmVmb3JtX1BlKQ0KcGxvdF93YXZlZm9ybV9NRk4gPC0gcGxvdF93YXZlZm9ybV9NRk4gKyB0aGVtZShsZWdlbmQucG9zaXRpb24gPSAibm9uZSIpDQpwbG90X3dhdmVmb3JtX1BlICA8LSBwbG90X3dhdmVmb3JtX1BlICArIHRoZW1lKGxlZ2VuZC5wb3NpdGlvbiA9ICJub25lIikNCg0KDQojIyMjIENyZWF0ZSB0b3BvZ3JhcGh5IHBsb3RzICMjIyMNCg0KIyBEZWZpbmUgZmFjZXQgbGFiZWxzDQpzdGltdWxhdGlvbi5sYWJzX2luY29yciA8LSBjKCJFcnJvcjogU2hhbSIsICJFcnJvcjogQ2F0aG9kYWwiKQ0KbmFtZXMoc3RpbXVsYXRpb24ubGFic19pbmNvcnIpIDwtIGMoInNoYW0iLCAidmVydW0iKQ0KDQpzdGltdWxhdGlvbi5sYWJzX2NvcnIgPC0gYygiQ29ycmVjdDogU2hhbSIsICJDb3JyZWN0OiBDYXRob2RhbCIpDQpuYW1lcyhzdGltdWxhdGlvbi5sYWJzX2NvcnIpIDwtIGMoInNoYW0iLCAidmVydW0iKQ0KDQoNCiMgRVJOIEhDDQpwbG90X3RvcG9fSENfRVJOIDwtIGdncGxvdChkYXRhX3RvcG9fTUZOW2RhdGFfdG9wb19NRk4kZ3JvdXAgPT0gIkhDIiAmIGRhdGFfdG9wb19NRk4kY29uZGl0aW9uID09ICJpbmNvcnJlY3QiLCBdLA0KICBhZXMoeCA9IHgsIHkgPSB5LCBmaWxsID0gYW1wbGl0dWRlLCBsYWJlbCA9IGVsZWN0cm9kZSkpICsNCiAgZ2VvbV90b3BvKGdyaWRfcmVzID0gMzAwLCBpbnRlcnBfbGltaXQgPSAiaGVhZCIsIGNoYW5fbWFya2VycyA9ICJwb2ludCIsIGNoYW5fc2l6ZSA9IDAuMSwgaGVhZF9zaXplID0gMC4yKSArDQogIHNjYWxlX2ZpbGxfZGlzdGlsbGVyKHBhbGV0dGUgPSAiUmRCdSIsIGxpbWl0cyA9IGMoLTUuMSwgNi41KSwgYnJlYWtzID0gYygtNSwgMCwgNSkpICsgIw0KICB0aGVtZV92b2lkKCkgKw0KICBjb29yZF9lcXVhbCgpICsNCiAgbGFicyhmaWxsID0gZXhwcmVzc2lvbihwYXN0ZShtdSwgIlYiKSkpICsNCiAgdGhlbWUobGVnZW5kLnBvc2l0aW9uID0gImJvdHRvbSIsIGxlZ2VuZC50ZXh0ID0gZWxlbWVudF90ZXh0KHNpemUgPSA3LCBjb2xvciA9ICJncmV5MzAiKSwNCiAgICAgICAgbGVnZW5kLnRpdGxlID0gZWxlbWVudF90ZXh0KHNpemUgPSA3LCBjb2xvciA9ICJncmV5MzAiKSwgbGVnZW5kLmtleS5oZWlnaHQgPSB1bml0KDAuMjUsICdjbScpLA0KICAgICAgICBsZWdlbmQua2V5LndpZHRoID0gdW5pdCgwLjI1LCAnY20nKSwgc3RyaXAudGV4dC54ID0gZWxlbWVudF90ZXh0KHNpemUgPSA3KSkgKw0KICBmYWNldF9ncmlkKGNvbHMgPSB2YXJzKHN0aW11bGF0aW9uKSwgbGFiZWxsZXIgPSBsYWJlbGxlcihzdGltdWxhdGlvbiA9IHN0aW11bGF0aW9uLmxhYnNfaW5jb3JyKSkNCg0KDQojIEVSTiBPQ0QNCnBsb3RfdG9wb19PQ0RfRVJOIDwtIGdncGxvdChkYXRhX3RvcG9fTUZOW2RhdGFfdG9wb19NRk4kZ3JvdXAgPT0gIk9DRCIgJiBkYXRhX3RvcG9fTUZOJGNvbmRpdGlvbiA9PSAiaW5jb3JyZWN0IiwgXSwNCiAgYWVzKHggPSB4LCB5ID0geSwgZmlsbCA9IGFtcGxpdHVkZSwgbGFiZWwgPSBlbGVjdHJvZGUpKSArDQogIGdlb21fdG9wbyhncmlkX3JlcyA9IDMwMCwgaW50ZXJwX2xpbWl0ID0gImhlYWQiLCBjaGFuX21hcmtlcnMgPSAicG9pbnQiLCBjaGFuX3NpemUgPSAwLjEsIGhlYWRfc2l6ZSA9IDAuMikgKw0KICBzY2FsZV9maWxsX2Rpc3RpbGxlcihwYWxldHRlID0gIlJkQnUiLCBsaW1pdHMgPSBjKC01LjEsIDYuNSksIGJyZWFrcyA9IGMoLTUsIDAsIDUpKSArICMNCiAgdGhlbWVfdm9pZCgpICsNCiAgY29vcmRfZXF1YWwoKSArDQogIGxhYnMoZmlsbCA9IGV4cHJlc3Npb24ocGFzdGUobXUsICJWIikpKSArDQogIHRoZW1lKGxlZ2VuZC5wb3NpdGlvbiA9ICJib3R0b20iLCBsZWdlbmQudGV4dCA9IGVsZW1lbnRfdGV4dChzaXplID0gNywgY29sb3IgPSAiZ3JleTMwIiksDQogICAgICAgIGxlZ2VuZC50aXRsZSA9IGVsZW1lbnRfdGV4dChzaXplID0gNywgY29sb3IgPSAiZ3JleTMwIiksIGxlZ2VuZC5rZXkuaGVpZ2h0ID0gdW5pdCgwLjI1LCAnY20nKSwNCiAgICAgICAgbGVnZW5kLmtleS53aWR0aCA9IHVuaXQoMC4yNSwgJ2NtJyksIHN0cmlwLnRleHQueCA9IGVsZW1lbnRfdGV4dChzaXplID0gNykpICsNCiAgZmFjZXRfZ3JpZChjb2xzID0gdmFycyhzdGltdWxhdGlvbiksIGxhYmVsbGVyID0gbGFiZWxsZXIoc3RpbXVsYXRpb24gPSBzdGltdWxhdGlvbi5sYWJzX2luY29ycikpDQoNCg0KIyBDUk4gSEMNCnBsb3RfdG9wb19IQ19DUk4gPC0gZ2dwbG90KGRhdGFfdG9wb19NRk5bZGF0YV90b3BvX01GTiRncm91cCA9PSAiSEMiICYgZGF0YV90b3BvX01GTiRjb25kaXRpb24gPT0gImNvcnJlY3QiLCBdLA0KICBhZXMoeCA9IHgsIHkgPSB5LCBmaWxsID0gYW1wbGl0dWRlLCBsYWJlbCA9IGVsZWN0cm9kZSkpICsNCiAgZ2VvbV90b3BvKGdyaWRfcmVzID0gMzAwLCBpbnRlcnBfbGltaXQgPSAiaGVhZCIsIGNoYW5fbWFya2VycyA9ICJwb2ludCIsIGNoYW5fc2l6ZSA9IDAuMSwgaGVhZF9zaXplID0gMC4yKSArDQogIHNjYWxlX2ZpbGxfZGlzdGlsbGVyKHBhbGV0dGUgPSAiUmRCdSIsIGxpbWl0cyA9IGMoMC41LCAxMS43KSwgYnJlYWtzID0gYygyLCA2LCAxMCkpICsgIw0KICB0aGVtZV92b2lkKCkgKw0KICBjb29yZF9lcXVhbCgpICsNCiAgbGFicyhmaWxsID0gZXhwcmVzc2lvbihwYXN0ZShtdSwgIlYiKSkpICsNCiAgdGhlbWUobGVnZW5kLnBvc2l0aW9uID0gImJvdHRvbSIsIGxlZ2VuZC50ZXh0ID0gZWxlbWVudF90ZXh0KHNpemUgPSA3LCBjb2xvciA9ICJncmV5MzAiKSwNCiAgICAgICAgbGVnZW5kLnRpdGxlID0gZWxlbWVudF90ZXh0KHNpemUgPSA3LCBjb2xvciA9ICJncmV5MzAiKSwgbGVnZW5kLmtleS5oZWlnaHQgPSB1bml0KDAuMjUsICdjbScpLA0KICAgICAgICBsZWdlbmQua2V5LndpZHRoID0gdW5pdCgwLjI1LCAnY20nKSwgc3RyaXAudGV4dC54ID0gZWxlbWVudF90ZXh0KHNpemUgPSA3KSkgKw0KICBmYWNldF9ncmlkKGNvbHMgPSB2YXJzKHN0aW11bGF0aW9uKSwgbGFiZWxsZXIgPSBsYWJlbGxlcihzdGltdWxhdGlvbiA9IHN0aW11bGF0aW9uLmxhYnNfY29ycikpDQoNCg0KIyBDUk4gT0NEDQpwbG90X3RvcG9fT0NEX0NSTiA8LSBnZ3Bsb3QoZGF0YV90b3BvX01GTltkYXRhX3RvcG9fTUZOJGdyb3VwID09ICJPQ0QiICYgZGF0YV90b3BvX01GTiRjb25kaXRpb24gPT0gImNvcnJlY3QiLCBdLA0KICBhZXMoeCA9IHgsIHkgPSB5LCBmaWxsID0gYW1wbGl0dWRlLCBsYWJlbCA9IGVsZWN0cm9kZSkpICsNCiAgZ2VvbV90b3BvKGdyaWRfcmVzID0gMzAwLCBpbnRlcnBfbGltaXQgPSAiaGVhZCIsIGNoYW5fbWFya2VycyA9ICJwb2ludCIsIGNoYW5fc2l6ZSA9IDAuMSwgaGVhZF9zaXplID0gMC4yKSArDQogIHNjYWxlX2ZpbGxfZGlzdGlsbGVyKHBhbGV0dGUgPSAiUmRCdSIsIGxpbWl0cyA9IGMoMC41LCAxMS43KSwgYnJlYWtzID0gYygyLCA2LCAxMCkpICsgIw0KICB0aGVtZV92b2lkKCkgKw0KICBjb29yZF9lcXVhbCgpICsNCiAgbGFicyhmaWxsID0gZXhwcmVzc2lvbihwYXN0ZShtdSwgIlYiKSkpICsNCiAgdGhlbWUobGVnZW5kLnBvc2l0aW9uID0gImJvdHRvbSIsIGxlZ2VuZC50ZXh0ID0gZWxlbWVudF90ZXh0KHNpemUgPSA3LCBjb2xvciA9ICJncmV5MzAiKSwNCiAgICAgICAgbGVnZW5kLnRpdGxlID0gZWxlbWVudF90ZXh0KHNpemUgPSA3LCBjb2xvciA9ICJncmV5MzAiKSwgbGVnZW5kLmtleS5oZWlnaHQgPSB1bml0KDAuMjUsICdjbScpLA0KICAgICAgICBsZWdlbmQua2V5LndpZHRoID0gdW5pdCgwLjI1LCAnY20nKSwgc3RyaXAudGV4dC54ID0gZWxlbWVudF90ZXh0KHNpemUgPSA3KSkgKw0KICBmYWNldF9ncmlkKGNvbHMgPSB2YXJzKHN0aW11bGF0aW9uKSwgbGFiZWxsZXIgPSBsYWJlbGxlcihzdGltdWxhdGlvbiA9IHN0aW11bGF0aW9uLmxhYnNfY29ycikpDQoNCg0KIyBQZSBIQw0KcGxvdF90b3BvX0hDX1BlIDwtIGdncGxvdChkYXRhX3RvcG9fUGVbZGF0YV90b3BvX1BlJGdyb3VwID09ICJIQyIgJiBkYXRhX3RvcG9fUGUkY29uZGl0aW9uID09ICJpbmNvcnJlY3QiLCBdLA0KICBhZXMoeCA9IHgsIHkgPSB5LCBmaWxsID0gYW1wbGl0dWRlLCBsYWJlbCA9IGVsZWN0cm9kZSkpICsNCiAgZ2VvbV90b3BvKGdyaWRfcmVzID0gMzAwLCBpbnRlcnBfbGltaXQgPSAiaGVhZCIsIGNoYW5fbWFya2VycyA9ICJwb2ludCIsIGNoYW5fc2l6ZSA9IDAuMSwgaGVhZF9zaXplID0gMC4yKSArDQogIHNjYWxlX2ZpbGxfZGlzdGlsbGVyKHBhbGV0dGUgPSAiUmRCdSIsIGxpbWl0cyA9IGMoMiwgMTAuNCkpICsgDQogIHRoZW1lX3ZvaWQoKSArDQogIGNvb3JkX2VxdWFsKCkgKw0KICBsYWJzKGZpbGwgPSBleHByZXNzaW9uKHBhc3RlKG11LCAiViIpKSkgKw0KICB0aGVtZShsZWdlbmQucG9zaXRpb24gPSAiYm90dG9tIiwgbGVnZW5kLnRleHQgPSBlbGVtZW50X3RleHQoc2l6ZSA9IDcsIGNvbG9yID0gImdyZXkzMCIpLA0KICAgICAgICBsZWdlbmQudGl0bGUgPSBlbGVtZW50X3RleHQoc2l6ZSA9IDcsIGNvbG9yID0gImdyZXkzMCIpLCBsZWdlbmQua2V5LmhlaWdodCA9IHVuaXQoMC4yNSwgJ2NtJyksDQogICAgICAgIGxlZ2VuZC5rZXkud2lkdGggPSB1bml0KDAuMjUsICdjbScpLCBzdHJpcC50ZXh0LnggPSBlbGVtZW50X3RleHQoc2l6ZSA9IDYuNSkpICsNCiAgZmFjZXRfZ3JpZChjb2xzID0gdmFycyhzdGltdWxhdGlvbiksIGxhYmVsbGVyID0gbGFiZWxsZXIoc3RpbXVsYXRpb24gPSBzdGltdWxhdGlvbi5sYWJzX2luY29ycikpDQoNCg0KIyBQZSBPQ0QNCnBsb3RfdG9wb19PQ0RfUGUgPC0gZ2dwbG90KGRhdGFfdG9wb19QZVtkYXRhX3RvcG9fUGUkZ3JvdXAgPT0gIk9DRCIgJiBkYXRhX3RvcG9fUGUkY29uZGl0aW9uID09ICJpbmNvcnJlY3QiLCBdLA0KICBhZXMoeCA9IHgsIHkgPSB5LCBmaWxsID0gYW1wbGl0dWRlLCBsYWJlbCA9IGVsZWN0cm9kZSkpICsNCiAgZ2VvbV90b3BvKGdyaWRfcmVzID0gMzAwLCBpbnRlcnBfbGltaXQgPSAiaGVhZCIsIGNoYW5fbWFya2VycyA9ICJwb2ludCIsIGNoYW5fc2l6ZSA9IDAuMSwgaGVhZF9zaXplID0gMC4yKSArDQogIHNjYWxlX2ZpbGxfZGlzdGlsbGVyKHBhbGV0dGUgPSAiUmRCdSIsIGxpbWl0cyA9IGMoMiwgMTAuNCkpICsgDQogIHRoZW1lX3ZvaWQoKSArDQogIGNvb3JkX2VxdWFsKCkgKw0KICBsYWJzKGZpbGwgPSBleHByZXNzaW9uKHBhc3RlKG11LCAiViIpKSkgKw0KICB0aGVtZShsZWdlbmQucG9zaXRpb24gPSAiYm90dG9tIiwgbGVnZW5kLnRleHQgPSBlbGVtZW50X3RleHQoc2l6ZSA9IDcsIGNvbG9yID0gImdyZXkzMCIpLA0KICAgICAgICBsZWdlbmQudGl0bGUgPSBlbGVtZW50X3RleHQoc2l6ZSA9IDcsIGNvbG9yID0gImdyZXkzMCIpLCBsZWdlbmQua2V5LmhlaWdodCA9IHVuaXQoMC4yNSwgJ2NtJyksDQogICAgICAgIGxlZ2VuZC5rZXkud2lkdGggPSB1bml0KDAuMjUsICdjbScpLCBzdHJpcC50ZXh0LnggPSBlbGVtZW50X3RleHQoc2l6ZSA9IDYuNSkpICsNCiAgZmFjZXRfZ3JpZChjb2xzID0gdmFycyhzdGltdWxhdGlvbiksIGxhYmVsbGVyID0gbGFiZWxsZXIoc3RpbXVsYXRpb24gPSBzdGltdWxhdGlvbi5sYWJzX2luY29ycikpDQpgYGANCg0KIyMgRVJOICYgQ1JODQoqKioNCg0KVGhpcyBmaWd1cmUgY29ycmVzcG9uZHMgdG8gRmlndXJlIDEgaW4gdGhlIG1hbnVzY3JpcHQuDQoNCmBgYHtyIGFycmFuZ2UtcGxvdHMtRVJOLUNSTiwgZmlnLndpZHRoID0gOCwgZmlnLmhlaWdodCA9IDEwLCBjYWNoZSA9IGtuaXRyX2NhY2hlX2VuYWJsZWQsIGRwaSA9IDYwMCwgZmlnLmNhcCA9ICJOb3RlLiAoQSkgUmVzcG9uc2UtbG9ja2VkIGdyYW5kIGF2ZXJhZ2Ugd2F2ZWZvcm1zIHdpdGggOTUlIGNvbmZpZGVuY2UgaW50ZXJ2YWxzIChDSXMpIGZvciBjb3JyZWN0IGFuZCBpbmNvcnJlY3QgcmVzcG9uc2VzIGF0IGVsZWN0cm9kZSBzaXRlIEZDeiBpbiB0aGUgc2hhbSBhbmQgY2F0aG9kYWwgdERDUyBjb25kaXRpb24gZm9yIHBhdGllbnRzIHdpdGggT0NEIGFuZCBIQyBwYXJ0aWNpcGFudHMsIGFsb25nIHdpdGggdG9wb2dyYXBoaWVzIG9mIEVSTiBhbmQgQ1JOICgw4oCTMTAwIG1zKS4gR3JheS1zaGFkZWQgYXJlYXMgaW4gdGhlIHdhdmVmb3JtIHBsb3RzIGluZGljYXRlIHRoZSB0aW1lIHdpbmRvdyB1c2VkIGZvciBFUk4gYW5kIENSTiBxdWFudGlmaWNhdGlvbi4gKEIpIEVSTiBhbmQgQ1JOIG1lYW4gYW1wbGl0dWRlIHZhbHVlcyBwZXIgZ3JvdXAgYW5kIHREQ1MgY29uZGl0aW9uIGFyZSBwcmVzZW50ZWQgYXMgYm94cGxvdHMgYW5kIHByb2JhYmlsaXR5IGRlbnNpdHkgcGxvdHMgYmFzZWQgb24gcmF3IGRhdGEuIChDKSBQcmVkaWN0ZWQgRVJOIGFuZCBDUk4gbWVhbiBhbXBsaXR1ZGUgdmFsdWVzIGJ5IGdyb3VwIGFuZCB0RENTIGNvbmRpdGlvbiwgY2FsY3VsYXRlZCBhcyBwYXJ0aWFsIGVmZmVjdHMgZnJvbSBsaW5lYXIgbWl4ZWQgbW9kZWxzLiBFcnJvciBiYXJzIHJlcHJlc2VudCA5NSUgQ0lzLiJ9DQoNCiMgT3ZlcmxheSB3YXZlZm9ybXMgYW5kIHRvcG9wZ3JhcGh5IHBsb3RzDQphbGlnbmVkX3Bsb3RzMV9NRk4gPC0gYWxpZ25fcGxvdHMocGxvdF93YXZlZm9ybV9NRk4sIHBsb3RfdG9wb19IQ19FUk4sICBheGlzID0gInRyIikNCmFsaWduZWRfcGxvdHMyX01GTiA8LSBhbGlnbl9wbG90cyhwbG90X3dhdmVmb3JtX01GTiwgcGxvdF90b3BvX0hDX0NSTiwgIGF4aXMgPSAidHIiKQ0KYWxpZ25lZF9wbG90czNfTUZOIDwtIGFsaWduX3Bsb3RzKHBsb3Rfd2F2ZWZvcm1fTUZOLCBwbG90X3RvcG9fT0NEX0VSTiwgYXhpcyA9ICJ0ciIpDQphbGlnbmVkX3Bsb3RzNF9NRk4gPC0gYWxpZ25fcGxvdHMocGxvdF93YXZlZm9ybV9NRk4sIHBsb3RfdG9wb19PQ0RfQ1JOLCBheGlzID0gInRyIikNCg0KDQojIEFycmFuZ2UgcGxvdHMNCmZpZ3VyZV9FUk5fQ1JOIDwtIGdnZHJhdygpICsNCiAgZHJhd19wbG90KGFsaWduZWRfcGxvdHMxX01GTltbMV1dLCAgeCA9ICAwLCAgIHkgPSAuNDIsICB3aWR0aCA9IC45OSwgaGVpZ2h0ID0gLjU2KSArDQogIGRyYXdfcGxvdChhbGlnbmVkX3Bsb3RzMV9NRk5bWzJdXSwgIHggPSAuMDczLCB5ID0gLjc5NSwgd2lkdGggPSAuMiwgIGhlaWdodCA9IC4xNSkgKw0KICBkcmF3X3Bsb3QoYWxpZ25lZF9wbG90czJfTUZOW1syXV0sICB4ID0gLjI5MywgeSA9IC43OTUsIHdpZHRoID0gLjIsICBoZWlnaHQgPSAuMTUpICsNCiAgZHJhd19wbG90KGFsaWduZWRfcGxvdHMzX01GTltbMl1dLCAgeCA9IC41NjMsIHkgPSAuNzk1LCB3aWR0aCA9IC4yLCAgaGVpZ2h0ID0gLjE1KSArDQogIGRyYXdfcGxvdChhbGlnbmVkX3Bsb3RzNF9NRk5bWzJdXSwgIHggPSAuNzgzLCB5ID0gLjc5NSwgd2lkdGggPSAuMiwgIGhlaWdodCA9IC4xNSkgKw0KICBkcmF3X3Bsb3QobGVnZW5kX01GTiwgICAgICAgICAgICAgICB4ID0gLjMxOCwgeSA9IC40LCAgIHdpZHRoID0gLjQsICBoZWlnaHQgPSAuMDEpICsNCiAgZHJhd19wbG90KHBsb3RfYm94X2RlbnNpdHlfRVJOLCAgICAgeCA9IC4wMSwgIHkgPSAuMDQsICB3aWR0aCA9IC4zLCAgaGVpZ2h0ID0gLjI5KSArDQogIGRyYXdfcGxvdChwbG90X0xNTV9FUk4sICAgICAgICAgICAgIHggPSAuNiwgICB5ID0gLjA0LCAgd2lkdGggPSAuMiwgIGhlaWdodCA9IC4zMikgKw0KICBkcmF3X3Bsb3QocGxvdF9ib3hfZGVuc2l0eV9DUk4sICAgICB4ID0gLjMsICAgeSA9IC4wNCwgIHdpZHRoID0gLjMsICBoZWlnaHQgPSAuMjkpICsNCiAgZHJhd19wbG90KHBsb3RfTE1NX0NSTiwgICAgICAgICAgICAgeCA9IC44LCAgIHkgPSAuMDQsICB3aWR0aCA9IC4yLCAgaGVpZ2h0ID0gLjMyKSArDQogIGRyYXdfcGxvdChsZWdlbmRfTUZOLCAgICAgICAgICAgICAgIHggPSAuMzE4LCB5ID0gLjAzNSwgd2lkdGggPSAuNCwgIGhlaWdodCA9IC4wMSkgKw0KICBkcmF3X3Bsb3RfbGFiZWwoYygiQSIsICJCIiwgIkMiKSwgYygwLCAwLCAuNTkpLCBjKDEsIC4zNiwgLjM2KSwgc2l6ZSA9IDE1KQ0KZmlndXJlX0VSTl9DUk4NCg0KDQojIFNhdmUgcGxvdA0KZ2dzYXZlKHBsb3QgPSBmaWd1cmVfRVJOX0NSTiwgIi4vZmlndXJlcy9maWd1cmVfRVJOX0NSTi50aWZmIiwgd2lkdGggPSAyMCwgaGVpZ2h0ID0gMjQsDQogICAgICAgdW5pdHMgPSAiY20iLCBkcGkgPSA2MDAsIGNvbXByZXNzaW9uID0gImx6dyIpDQpgYGANCjxicj48YnI+DQoNCiMjIFBlDQoqKioNCg0KVGhpcyBmaWd1cmUgY29ycmVzcG9uZHMgdG8gRmlndXJlIDIgaW4gdGhlIG1hbnVzY3JpcHQuDQoNCmBgYHtyIGFycmFuZ2UtcGxvdHMtUGUsIGZpZy53aWR0aCA9IDgsIGZpZy5oZWlnaHQgPSA0LCBjYWNoZSA9IGtuaXRyX2NhY2hlX2VuYWJsZWQsIGRwaSA9IDYwMCwgZmlnLmNhcCA9ICJOb3RlLiAoQSkgUmVzcG9uc2UtbG9ja2VkIGdyYW5kIGF2ZXJhZ2Ugd2F2ZWZvcm1zIHdpdGggOTUlIGNvbmZpZGVuY2UgaW50ZXJ2YWxzIChDSXMpIGZvciBpbmNvcnJlY3QgcmVzcG9uc2VzIGF0IGVsZWN0cm9kZSBzaXRlIFB6IGluIHRoZSBzaGFtIGFuZCBjYXRob2RhbCB0RENTIGNvbmRpdGlvbiBmb3IgcGF0aWVudHMgd2l0aCBPQ0QgYW5kIEhDIHBhcnRpY2lwYW50cywgYWxvbmcgd2l0aCB0b3BvZ3JhcGhpZXMgb2YgdGhlIFBlICgyMDDigJM0MDAgbXMpLiBHcmF5LXNoYWRlZCBhcmVhcyBpbiB0aGUgd2F2ZWZvcm0gcGxvdHMgaW5kaWNhdGUgdGhlIHRpbWUgd2luZG93IHVzZWQgZm9yIFBlIHF1YW50aWZpY2F0aW9uLiAoQikgUGUgbWVhbiBhbXBsaXR1ZGUgdmFsdWVzIHBlciBncm91cCBhbmQgdERDUyBjb25kaXRpb24gYXJlIHByZXNlbnRlZCBhcyBib3hwbG90cyBhbmQgcHJvYmFiaWxpdHkgZGVuc2l0eSBwbG90cyBiYXNlZCBvbiByYXcgZGF0YS4gKEMpIFByZWRpY3RlZCBQZSBtZWFuIGFtcGxpdHVkZSB2YWx1ZXMgYnkgZ3JvdXAgYW5kIHREQ1MgY29uZGl0aW9uLCBjYWxjdWxhdGVkIGFzIHBhcnRpYWwgZWZmZWN0cyBmcm9tIGxpbmVhciBtaXhlZCBtb2RlbHMuIEVycm9yIGJhcnMgcmVwcmVzZW50IDk1JSBDSXMuIn0NCg0KIyBPdmVybGF5IHdhdmVmb3JtcyBhbmQgdHBvcGdyYXBoeSBwbG90cw0KYWxpZ25lZF9wbG90czFfUGUgIDwtIGFsaWduX3Bsb3RzKHBsb3Rfd2F2ZWZvcm1fUGUsIHBsb3RfdG9wb19IQ19QZSwgIGF4aXMgPSAidHIiKQ0KYWxpZ25lZF9wbG90czJfUGUgIDwtIGFsaWduX3Bsb3RzKHBsb3Rfd2F2ZWZvcm1fUGUsIHBsb3RfdG9wb19PQ0RfUGUsIGF4aXMgPSAidHIiKQ0KDQoNCiMgQXJyYW5nZSBwbG90cw0KZmlndXJlX1BlIDwtIGdnZHJhdygpICsNCiAgZHJhd19wbG90KGFsaWduZWRfcGxvdHMxX1BlW1sxXV0sIHggPSAgMCwgICB5ID0gLjA1LCAgd2lkdGggPSAuNzY1LCBoZWlnaHQgPSAuOTIpICsNCiAgZHJhd19wbG90KGFsaWduZWRfcGxvdHMxX1BlW1syXV0sIHggPSAuMDcsICB5ID0gLjY2NCwgd2lkdGggPSAuMywgICBoZWlnaHQgPSAuMjIpICsNCiAgZHJhd19wbG90KGFsaWduZWRfcGxvdHMyX1BlW1syXV0sIHggPSAuNDQ3LCB5ID0gLjY2NCwgd2lkdGggPSAuMywgICBoZWlnaHQgPSAuMjIpICsNCiAgZHJhd19wbG90KHBsb3RfYm94X2RlbnNpdHlfUGUsICAgIHggPSAuNzcsICB5ID0gLjQ4LCAgd2lkdGggPSAuMjUsICBoZWlnaHQgPSAuNDcpICsNCiAgZHJhd19wbG90KHBsb3RfTE1NX1BlLCAgICAgICAgICAgIHggPSAuNzc0LCB5ID0gLjA1LCAgd2lkdGggPSAuMjUsICBoZWlnaHQgPSAuNDgpICsNCiAgZHJhd19wbG90KGxlZ2VuZF9QZSwgICAgICAgICAgICAgIHggPSAuMywgICB5ID0gLjAxLCAgd2lkdGggPSAuMiwgICBoZWlnaHQgPSAuMDEpICsNCiAgZHJhd19wbG90X2xhYmVsKGMoIkEiLCAiQiIsICJDIiksIGMoMCwgLjc1LCAuNzUpLCBjKDEsIDEsIC41OCksIHNpemUgPSAxNSkNCmZpZ3VyZV9QZQ0KDQoNCiMgU2F2ZSBwbG90DQpnZ3NhdmUocGxvdCA9IGZpZ3VyZV9QZSwgIi4vZmlndXJlcy9maWd1cmVfUGUudGlmZiIsIHdpZHRoID0gMjAsIGhlaWdodCA9IDEyLA0KICAgICAgIHVuaXRzID0gImNtIiwgZHBpID0gNjAwLCBjb21wcmVzc2lvbiA9ICJsenciKQ0KYGBgDQo=</div>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("4_Plots.Rmd");
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3,h4",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,898 @@
+---
+title: "ERP Data"
+output: 
+  html_document
+---
+
+<!-- Set general settings -->
+
+```{r setup, include = FALSE}
+
+# Set general settings for markdown file
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  comment = "",
+  results = "hold"
+)
+
+
+# Clear environment
+rm(list = ls())
+
+
+# Enable/disable caching of time-consuming code chunks
+knitr_cache_enabled = TRUE
+
+
+# Load packages
+library(dplyr)      # for data wrangling
+library(knitr)      # for integrating computing and reporting in markdown
+library(kableExtra) # for customizing appearance of tables
+library(MASS)       # for boxcox function and contrast definition
+library(lme4)       # for (G)LMMs
+library(lmerTest)   # for LMM p values (Satterthwaite's method for approximating dfs for t and F tests)
+library(sjPlot)     # for tab_model function to display (G)LMM results
+library(splithalf)  # for permutation-based split-half reliability
+
+
+# Load functions
+source("./functions/summarySEwithinO.R")  # Function provided by R-cookbook: http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/
+source("./functions/my_table_template.R") # Function to create table template
+source("./functions/R_rainclouds.R")      # Function to create raincloud plots
+
+
+# Turn off scientific notation
+options(scipen = 999)
+```
+<br><br> 
+
+## Data Cleaning
+***
+
+```{r load-and-clean-data}
+
+# Load data
+load(file = "./data/Single_Trial_Data.rda")
+
+
+# Exclude missing responses, RT outliers, and trials with ERP artifacts
+single_trial_data_clean <- single_trial_data %>%
+  dplyr::filter(
+      response_type != "miss" &
+      rt_invalid    == FALSE &
+      !is.na(MFN_0_100_FCz)
+  ) # (53093 of 53760 trials left)
+
+
+# Create medication variable (needed as covariate later)
+single_trial_data_clean <- single_trial_data_clean %>%
+  dplyr::mutate(
+    medication = as.factor(ifelse(
+      participant_id == "P_02" | participant_id == "P_04" |
+      participant_id == "P_05" | participant_id == "P_06" |
+      participant_id == "P_08" | participant_id == "P_10" |
+      participant_id == "P_15" | participant_id == "P_16" |
+      participant_id == "P_18" | participant_id == "P_22" |
+      participant_id == "P_25" | participant_id == "P_26" |
+      participant_id == "P_28" | participant_id == "P_30", "yes", "no")),
+    group_medication = as.factor(ifelse((group == "HC"), "HC",
+      ifelse((group == "OCD" & medication == "no"), "OCD_no_med", "OCD_med")))
+    )
+
+
+# Create within-participant standardized P300 variable (needed as covariate later)
+single_trial_data_clean <- single_trial_data_clean %>%
+  dplyr::group_by(participant_id, session) %>%
+  dplyr::mutate(P3_300_500_CPz_standardized = scale(P3_300_500_CPz, center = TRUE, scale = TRUE))  %>%
+  dplyr::ungroup()
+
+
+# Make categorical variables factors
+single_trial_data_clean$participant_id   <- factor(single_trial_data_clean$participant_id)
+single_trial_data_clean$group            <- factor(single_trial_data_clean$group)
+single_trial_data_clean$stimulation      <- factor(single_trial_data_clean$stimulation)
+single_trial_data_clean$response_type    <- factor(single_trial_data_clean$response_type)
+single_trial_data_clean$group_medication <- factor(single_trial_data_clean$group_medication, 
+                                                   levels = c("HC", "OCD_no_med", "OCD_med"))
+```
+
+Trials with a response time below 100 ms or above 800 ms or with a missing response were excluded from all analyses. We further discarded trials containing artifacts in the EEG, that is, a voltage change exceeding 50 μV between sample points or 200 μV within an epoch. <br><br>
+
+```{r excluded-trials}
+
+# Calculate percentage of excluded trials per participant
+excluded_trials_per_participant <- single_trial_data %>%
+  dplyr::group_by(group, participant_id, session) %>%
+  dplyr::summarize(
+    invalid_rt   = sum(!is.na(rt_invalid) & rt_invalid != FALSE) / length(participant_id) * 100,
+    misses       = sum(response_type == "miss") / length(participant_id) * 100,
+    EEG_artifact = sum(is.nan(MFN_0_100_FCz))   / length(participant_id) * 100 
+  ) %>%
+  dplyr::ungroup()
+
+
+# Summarize percentage of excluded trials per participant over groups
+excluded_trials_per_participant_over_groups <- excluded_trials_per_participant %>%
+  dplyr::summarize(across(-c(group, participant_id, session), list(mean, sd, min, max)))
+
+
+# Summarize percentage of excluded trials per participant per group
+excluded_trials_per_participant_per_group <- excluded_trials_per_participant %>%
+  dplyr::group_by(group) %>%
+  dplyr::summarize(across(-c(participant_id, session), list(mean, sd, min, max))) %>%
+  dplyr::ungroup()
+
+
+# Combine groups and total sample
+excluded_trials <- rbind(excluded_trials_per_participant_per_group, 
+                         cbind(group = "Overall", excluded_trials_per_participant_over_groups))
+
+
+# Display percentage of excluded trials per participant
+my_table_template(excluded_trials,
+  caption = "Excluded Trials per Participant (in %)",
+  col_names = c(" ", rep(c("M", "SD", "min", "max"), 3)),
+  header_above_config = c(" " = 1, "RT < 100 / > 800 ms" = 4, "Misses" = 4, "EEG artifact" = 4)
+)
+```
+<br><br>
+
+
+## Descriptive Statistics 
+***
+
+This table corresponds to Table 2 in the manuscript.
+
+```{r descriptive-statistics-table}
+
+# Calculate descriptive statistics for ERN/CRN
+descriptive_statistics_MFN <- summarySEwithinO(
+  data          = single_trial_data_clean,
+  measurevar    = "MFN_0_100_FCz",
+  withinvars    = c("response_type", "stimulation"),
+  betweenvars   = "group",
+  idvar         = "participant_id",
+  conf.interval = .95
+) %>% dplyr::rename(M = MFN_0_100_FCz, M_norm = MFN_0_100_FCz_norm) %>%
+  dplyr::arrange(desc(response_type)) %>%
+  dplyr::select(-response_type)
+
+
+# Calculate descriptive statistics for Pe
+descriptive_statistics_Pe <- summarySEwithinO(
+  data          = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ],
+  measurevar    = "Pe_200_400_Pz",
+  withinvars    = "stimulation",
+  betweenvars   = "group",
+  idvar         = "participant_id",
+  conf.interval = .95
+) %>% dplyr::rename(M = Pe_200_400_Pz, M_norm = Pe_200_400_Pz_norm)
+
+
+
+# Combine measures
+descriptive_statistics <- as.data.frame(rbind(descriptive_statistics_MFN, descriptive_statistics_Pe))
+
+
+
+# Label measures
+descriptive_statistics$Measure <- c(rep("ERN (µV)", 4), rep("CRN (µV)", 4), rep("Pe (µV)", 4))
+
+
+# Create column with format "M [CI]" (round to 2 decimals)
+descriptive_statistics$M_CI <- paste0(
+  format(round(descriptive_statistics$M,  2), nsmall = 2), " [",
+  format(round(descriptive_statistics$M -
+               descriptive_statistics$ci, 2), nsmall = 2), ", ",
+  format(round(descriptive_statistics$M +
+               descriptive_statistics$ci, 2), nsmall = 2), "]")
+
+
+
+# Select relevant columns
+descriptive_statistics <- descriptive_statistics[, c ("group", "stimulation", "Measure", "M_CI")]
+
+
+
+# Split and re-merge table to display both groups next to each other
+descriptive_statistics <- split(descriptive_statistics, list(descriptive_statistics$stimulation,
+                                                             descriptive_statistics$group))
+descriptive_statistics_display <- cbind(
+  descriptive_statistics$sham.OCD[, c("Measure", "M_CI")],
+  descriptive_statistics$sham.HC[, "M_CI"],
+  descriptive_statistics$verum.OCD[, "M_CI"],
+  descriptive_statistics$verum.HC[, "M_CI"]
+)
+
+
+# Display table
+my_table_template(descriptive_statistics_display,
+  caption = "ERP Measures in Patients With OCD and HC Participants",
+  col_names = c(" ", rep("M [95% CI]", 4)),
+  header_above_config = c(" ", rep(c("Patients with OCD", "HC participants"), 2)),
+  footnote_config = c(general = "CIs are adjusted for within-participant designs (Morey, 2008).
+  ERN = error-related negativity; CRN = correct-response negativity; Pe = error positivity.")) %>%
+  add_header_above(c(" " = 1, "Sham tDCS" = 2, "Cathodal tDCS" = 2))
+```
+<br><br>
+
+## Split-Half Reliability
+***
+
+```{r permutation-split-half-reliability, cache = knitr_cache_enabled}
+
+# Calculate permutation-based split-half internal consistency for ERN/CRN
+invisible(capture.output(split_half_reliability_MFN <- splithalf(
+  data = single_trial_data_clean,
+  outcome = "RT",
+  score = "average",
+  permutations = 5000,
+  halftype = "random",
+  var.RT = "MFN_0_100_FCz",
+  var.trialnum = "trial",
+  var.participant = "participant_id",
+  var.condition = "response_type",
+  conditionlist = c("correct", "incorrect"),
+  average = "mean")))
+
+
+# Calculate permutation-based split-half internal consistency for Pe
+invisible(capture.output(split_half_reliability_Pe <- splithalf(
+  data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ],
+  outcome = "RT",
+  score = "average",
+  permutations = 5000,
+  halftype = "random",
+  var.RT = "Pe_200_400_Pz",
+  var.trialnum = "trial",
+  var.participant = "participant_id",
+  average = "mean")))
+
+
+# Combine ERPs
+split_half_reliability <- cbind(ERP = c("CRN", "ERN", "Pe"), 
+                                rbind(split_half_reliability_MFN$final_estimates, 
+                                      split_half_reliability_Pe$final_estimates)) %>%
+  dplyr::select(ERP, spearmanbrown, SB_low, SB_high) %>%
+  dplyr::rename(
+    r      = spearmanbrown,
+    CI_low = SB_low,
+    CI_up  = SB_high
+    )
+
+
+# Display permutation-based split-half internal consistency
+my_table_template(split_half_reliability[c(2,1,3), ], 
+                  caption = "Permutation-based split-half reliability")
+```
+We examined the internal consistency of the ERPs using a permutation-based split-half approach with 5,000 random splits and Spearman–Brown correction. Results indicated excellent internal consistency for ERN (r = .95, 95% CI [.93, .97]), CRN (r = 1.00, 95% CI [.99, 1.00]), and Pe (r = .94, 95% CI [.91, .96]).
+<br><br><br>
+
+## LMM Analyses
+***
+
+We analyzed ERP measures (ERN, CRN, Pe) using linear mixed models (LMMs) on single-trial data. We tested whether group differences and tDCS effects were present. Group (healthy controls, OCD) and tDCS condition (cathodal, sham) were included as fixed effects in all models. All categorical fixed effects were effect-coded (contrast coefficients −0.5 and 0.5). 
+
+We determined the random-effects structure for each model based on the procedure proposed by Bates et al. (2015), starting with the maximal random-effects structure justified by the design, with by-participant random intercepts and random slopes for all fixed factors and (where applicable) their interactions. If required for model convergence, correlation parameters of the random terms were set to zero. Random effects preventing model convergence or explaining zero variance as determined by principal component analysis were removed to avoid overparameterization.
+
+In these analyses, model estimates directly reflect mean differences in microvolts. Note that for negative components, such as the ERN and CRN, negative estimates indicate an increase in amplitude, whereas positive estimates indicate a decrease.
+
+```{r LMM-contrast-coding}
+
+# Define contrasts (sliding difference contrasts = effect coding for factors with 2 levels)
+contrasts(single_trial_data_clean$stimulation)      <- contr.sdif(2)
+contrasts(single_trial_data_clean$group)            <- contr.sdif(2)
+contrasts(single_trial_data_clean$response_type)    <- contr.sdif(2)
+contrasts(single_trial_data_clean$group_medication) <- contr.sdif(3)
+
+
+# Prepare labels for LMM tables
+labels <- c(
+  "(Intercept)"                               = "Intercept",
+  "stimulation2-1"                            = "Stimulation",
+  "group2-1"                                  = "Group",
+  "response_type2-1"                          = "Response type",
+  "stimulation2-1:group2-1"                   = "Stimulation x Group",
+  "stimulation2-1:response_type2-1"           = "Stimulation x Response type",
+  "group2-1:response_type2-1"                 = "Group x Response type",
+  "stimulation2-1:group2-1:response_type2-1"  = "Stimulation x Group x Response type",
+  "group_medication2-1"                       = "OCDno med - HC",
+  "group_medication3-2"                       = "OCDmed - OCDno med",
+  "stimulation2-1:group_medication2-1"        = "Stimulation x OCDno med - HC",
+  "stimulation2-1:group_medication3-2"        = "Stimulation x OCDmed - OCDno med",
+  "P3_300_500_CPz_standardized"               = "P300",
+  "stimulation2-1:P3_300_500_CPz_standardized"= "Stimulation x P300",
+  "group2-1:P3_300_500_CPz_standardized"      = "Group x P300",
+  "stimulation2-1:group2-1:P3_300_500_CPz_standardized" = "Stimulation x Group x P300"
+)
+```
+<br><br>
+
+### Response-Related Negativity {.tabset}
+
+#### Determine data transformation
+
+No data transformation was required to meet the assumption of normally distributed residuals. This was determined using the Box–Cox procedure (Box & Cox, 1964).
+
+```{r MFN-determine-transformation, fig.width = 8, fig.height = 3}
+
+# Arrange plots
+par(mfrow = c(1, 3))
+
+
+# Determine transformation by estimating optimal lambda using Box–Cox procedure
+bc_MFN <- boxcox(MFN_0_100_FCz + 100 ~ 1, data = single_trial_data_clean)
+optlambda_MFN <- bc_MFN$x[which.max(bc_MFN$y)]
+
+
+# Density plot for MFN values
+plot(density(single_trial_data_clean$MFN_0_100_FCz), main = "Density  Plot")
+
+
+# Q-q plot for MFN values
+qqnorm(single_trial_data_clean$MFN_0_100_FCz, main = "Q-Q Plot", pch = 1)
+
+
+# Reset plot layout
+par(mfrow = c(1, 1))
+```
+The optimal lambda is `r round(optlambda_MFN, digits = 2)`, suggesting that no transformation is needed.
+<br><br><br>
+
+#### LMM {.active}
+
+We fitted a LMM with response-related negativity (corresponds to ERN for error trials and CRN for correct trials) as dependent variable to examine the presence of an overall tDCS effect on electrophysiological correlates of performance monitoring. Both correct and incorrect trials were included in this analysis. We entered group, tDCS condition, and response type as predictors. <br><br>
+This table corresponds to Table S3 in the supplemental material.
+
+```{r LMM-MFN, cache = knitr_cache_enabled}
+
+# Run model
+LMM_MFN <- lmer(MFN_0_100_FCz ~ stimulation * group * response_type +
+  (1 + stimulation * response_type | participant_id),
+data = single_trial_data_clean,
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_MFN)        # Model does converge
+# isSingular(LMM_MFN)     # No singular fit
+# summary(rePCA(LMM_MFN)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_MFN,
+  dv.labels = "Response-related negativity", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, 
+  show.r2 = FALSE, show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed 
+  effects", string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  wrap.labels = 80, title = "Results of the LMM Predicting the Response-Related Negativity Amplitude 
+  as a Function of Stimulation Condition (Cathodal - Sham), Group (OCD - Healthy Controls), and 
+  Response Type (Incorrect - Correct)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(LMM_MFN), digits = 3, comp = "Std.Dev.")
+```
+<br><br>
+The LMM on the response-related negativity across correct and incorrect responses revealed a main effect of response type, with more negative amplitudes for errors (ERN) than for correct responses (CRN). A trend for an enhanced response-related negativity in patients with OCD compared to control participants was observed. Crucially, we found that the response-related negativity was reduced (i.e., less negative) after cathodal tDCS relative to sham tDCS, as evidenced by a main effect of tDCS condition. There was no significant interaction between any of the factors. 
+<br><br><br>
+
+### ERN {.tabset}
+
+#### Determine data transformation
+
+No data transformation was required to meet the assumption of normally distributed residuals. This was determined using the Box–Cox procedure (Box & Cox, 1964).
+
+```{r ERN-determine-transformation, fig.width = 8, fig.height = 3}
+
+# Arrange plots
+par(mfrow = c(1, 3))
+
+
+# Determine transformation by estimating optimal lambda using Box–Cox procedure
+bc_ERN <- boxcox(MFN_0_100_FCz + 100 ~ 1, 
+                 data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ])
+optlambda_ERN <- bc_ERN$x[which.max(bc_ERN$y)]
+
+
+# Density plot for ERN values
+plot(density(single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ]$MFN_0_100_FCz), 
+     main = "ERN: Density  Plot")
+
+
+# Q-q plot for ERN values
+qqnorm(single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ]$MFN_0_100_FCz, 
+       main = "ERN: Q-Q Plot", pch = 1)
+
+
+# Reset plot layout
+par(mfrow = c(1, 1))
+```
+The optimal lambda is `r round(optlambda_ERN, digits = 2)`, suggesting that no transformation is needed.
+<br><br><br>
+
+#### LMM {.active}
+
+Including only error trials in the analysis, we fitted a LMM with ERN amplitude as dependent variable. In accordance with the preregistratration, separate models for ERN and CRN were specified in addition to the overall model for the response-related negativity to allow comparison with previously reported results on these ERPs. <br><br>
+This table corresponds to Table 3 in the manuscript.
+
+```{r LMM-ERN}
+
+# Run model
+LMM_ERN <- lmer(MFN_0_100_FCz ~ stimulation * group  +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_ERN)        # Model does converge
+# isSingular(LMM_ERN)     # No singular fit
+# summary(rePCA(LMM_ERN)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_ERN,
+  dv.labels = "ERN", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  title = "Results of the LMM Predicting ERN Amplitude as a Function of Stimulation Condition 
+  (Cathodal - Sham) and Group (OCD - Healthy Controls)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(LMM_ERN), digits = 3, comp = "Std.Dev.")
+
+
+# Save model output for plot
+saveRDS(LMM_ERN, file = "./saved_objects_for_plots/LMM_ERN.rds")
+```
+<br><br>
+In the analysis of the ERN, the main effect of group did not reach statistical significance, but a trend for an enhanced ERN amplitude in patients with OCD relative to healthy control participants was observed. Moreover, there was a statistical trend toward a reduced ERN amplitude after cathodal tDCS relative to sham tDCS. No significant interaction between group and tDCS condition was found, indicating that there was no evidence that the effect of tDCS on ERN amplitude was larger in patients with OCD than in healthy participants. 
+<br><br><br>
+
+#### Sham condition
+
+```{r LMM-ERN-sham}
+
+# Run model
+LMM_ERN_sham <- lmer(MFN_0_100_FCz ~ group  +  (1 | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect" & 
+                                 single_trial_data_clean$stimulation == "sham", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_ERN_sham)        # Model does converge
+# isSingular(LMM_ERN_sham)     # No singular fit
+# summary(rePCA(LMM_ERN_sham)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_ERN_sham,
+  dv.labels = "ERN sham", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  title = "Results of the LMM Predicting ERN Amplitude in the Sham Condition as a Function of 
+  Group (OCD - Healthy Controls)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(LMM_ERN_sham), digits = 3, comp = "Std.Dev.")
+```
+<br><br>
+The analysis evaluating group differences solely in the baseline ERN (i.e., in the sham condition) yielded the same pattern of results regarding the trend for an enhanced ERN amplitude in patients with OCD relative to healthy control participants.
+<br><br><br>
+
+#### Equivalence test: ERN
+
+Since the tDCS-induced ERN reduction emerged only as a statistical trend in the main analysis, we further examined this effect using the two one-sided tests procedure for equivalence testing in a non-preregistered post hoc analysis. We defined the smallest effect size of interest (SESOI) as the effect size that the study by Reinhart and Woodman (2014) had 33% power to detect. On the basis of this approach, we set the SESOI for equivalence bounds to Cohen’s *dz* = 0.38, which corresponds to an ERN amplitude difference of 1.34 µV between cathodal and sham tDCS. 
+
+```{r ERN-equivalence-test}
+
+# Equivalence bounds (refers to difference in raw values of 1.34 microvolt)
+bound_l <- -1.34 # lower equivalence bound
+bound_u <-  1.34 # upper equivalence bound
+
+
+# Use  contest1D function of the lmerTest package to perform tests centered on the lower and upper bound
+lower <- contest1D(LMM_ERN, c(0, 1, 0, 0), confint = TRUE, rhs = bound_l) # test against lower bound
+upper <- contest1D(LMM_ERN, c(0, 1, 0, 0), confint = TRUE, rhs = bound_u) # test against upper bound
+# Note: c(0,1,0,0) refers to stimulation effect (= second fixed effect), as can be seen with fixef(LMM_ERN)
+
+
+# Recalculate the required one-sided tests from the t-values (test provided by contest1D is two-sided)
+p_lower <- pt(lower$`t value`, lower$df, lower.tail = FALSE) # test against lower bound
+p_upper <- pt(upper$`t value`, upper$df, lower.tail = TRUE) # test against upper bound
+```
+
+Test against lower bound: *t*(`r round(lower$df, 2)`) = `r round(lower$"t value", 2)`, *p* `r format.pval(p_lower, digits = 3, eps = 0.001)`  <br>
+Test against upper bound: *t*(`r round(upper$df, 2)`) = `r round(upper$"t value", 2)`, *p* = `r round(p_upper, 3)`  <br>
+
+The equivalence test was not significant, t(`r round(upper$df, 2)`) = `r round(upper$"t value", 2)`, *p* = `r round(p_upper, 3)`, indicating that the ERN amplitude in the cathodal tDCS condition was not statistically equivalent to that in the sham condition. Thus, we cannot reject the presence of an effect as large or larger than 1.34 µV. Taken together, based on results from null hypothesis testing and equivalence testing, we can neither reliably conclude that the effect of cathodal tDCS on ERN amplitude is different from zero (no statistical significance, only a statistical trend), nor that an effect that can be considered meaningful is absent (no statistical equivalence). 
+<br><br><br>
+
+### CRN {.tabset}
+
+#### Determine data transformation
+
+No data transformation was required to meet the assumption of normally distributed residuals. This was determined using the Box–Cox procedure (Box & Cox, 1964).
+
+```{r CRN-determine-transformation, fig.width = 8, fig.height = 3}
+
+# Arrange plots
+par(mfrow = c(1, 3))
+
+
+# Determine transformation by estimating optimal lambda using Box–Cox procedure
+bc_CRN <- boxcox(MFN_0_100_FCz + 100 ~ 1, 
+                 data = single_trial_data_clean[single_trial_data_clean$response_type == "correct", ])
+optlambda_CRN <- bc_CRN$x[which.max(bc_CRN$y)]
+
+
+# Density plot for CRN values
+plot(density(single_trial_data_clean[single_trial_data_clean$response_type == "correct", ]$MFN_0_100_FCz), 
+     main = "CRN: Density  Plot")
+
+
+# Q-q plot for CRN values
+qqnorm(single_trial_data_clean[single_trial_data_clean$response_type == "correct", ]$MFN_0_100_FCz, 
+       main = "CRN: Q-Q Plot", pch = 1)
+
+
+# Reset plot layout
+par(mfrow = c(1, 1))
+```
+The optimal lambda is `r round(optlambda_CRN, digits = 2)`, suggesting that no transformation is needed.
+<br><br><br>
+
+#### LMM {.active}
+
+Including only trials with correct response in the analysis, we fitted a LMM with CRN amplitude as dependent variable. In accordance with the preregistratration, separate models for ERN and CRN were specified in addition to the overall model for the response-related negativity to allow comparison with previously reported results on these ERPs. <br><br>
+This table corresponds to Table 3 in the manuscript.
+
+```{r LMM-CRN}
+
+# Run model
+LMM_CRN <- lmer(MFN_0_100_FCz ~ stimulation * group  +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "correct", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_CRN)        # Model does converge
+# isSingular(LMM_CRN)     # No singular fit
+# summary(rePCA(LMM_CRN)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_CRN,
+  dv.labels = "CRN", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  title = "Results of the LMM Predicting CRN Amplitude as a Function of Stimulation Condition 
+  (Cathodal - Sham) and Group (OCD - Healthy Controls)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(LMM_CRN), digits = 3, comp = "Std.Dev.")
+
+
+# Save model output for plot
+saveRDS(LMM_CRN, file = "./saved_objects_for_plots/LMM_CRN.rds")
+```
+<br><br>
+The LMM on the CRN yielded a trend for a main effect of group, such that patients with OCD showed an enhanced CRN amplitude compared to control participants. In addition, a significant main effect of tDCS condition revealed that the CRN amplitude was significantly smaller after cathodal tDCS relative to sham tDCS. There was no significant interaction between group and tDCS condition.
+<br><br><br>
+
+#### Sham condition
+
+```{r LMM-CRN-sham}
+
+# Run model
+LMM_CRN_sham <- lmer(MFN_0_100_FCz ~ group  +  (1 | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "correct" & 
+                                 single_trial_data_clean$stimulation == "sham", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_CRN_sham)        # Model does converge
+# isSingular(LMM_CRN_sham)     # No singular fit
+# summary(rePCA(LMM_CRN_sham)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_CRN_sham,
+  dv.labels = "CRN sham", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  title = "Results of the LMM Predicting CRN Amplitude in the Sham Condition as a Function of 
+  Group (OCD - Healthy Controls)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(LMM_CRN_sham), digits = 3, comp = "Std.Dev.")
+```
+<br><br>
+When evaluating group differences solely in the baseline CRN (i.e., in the sham condition), patients with OCD showed an enhanced CRN amplitude compared to control participants.
+<br><br><br>
+
+### Pe {.tabset}
+
+#### Determine data transformation
+
+No data transformation was required to meet the assumption of normally distributed residuals. This was determined using the Box–Cox procedure (Box & Cox, 1964).
+
+```{r Pe-determine-transformation, fig.width = 8, fig.height = 3}
+
+# Arrange plots
+par(mfrow = c(1, 3))
+
+
+# Determine transformation by estimating optimal lambda using Box–Cox procedure
+bc_Pe <- boxcox(Pe_200_400_Pz + 120 ~ 1, 
+                data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ])
+optlambda_Pe <- bc_Pe$x[which.max(bc_Pe$y)]
+
+
+# Density plot for Pe values
+plot(density(single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ]$Pe_200_400_Pz), 
+     main = "Pe: Density  Plot")
+
+
+# Q-q plot for Pe values
+qqnorm(single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ]$Pe_200_400_Pz, 
+       main = "Pe: Q-Q Plot", pch = 1)
+
+
+# Reset plot layout
+par(mfrow = c(1, 1))
+```
+The optimal lambda is `r round(optlambda_Pe, digits = 2)`, suggesting that no transformation is needed.
+<br><br><br>
+
+
+#### LMM {.active}
+
+Including only error trials in the analysis, we fitted a LMM with Pe amplitude as dependent variable.<br><br>
+This table corresponds to Table 3 in the manuscript.
+
+```{r LMM-Pe}
+
+# Run model
+LMM_Pe <- lmer(Pe_200_400_Pz ~ stimulation * group  +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_Pe)        # Model does converge
+# isSingular(LMM_Pe)     # No singular fit
+# summary(rePCA(LMM_Pe)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_Pe,
+  dv.labels = "Pe", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  title = "Results of the LMM Predicting Pe Amplitude as a Function of Stimulation Condition 
+  (Cathodal - Sham) and Group (OCD - Healthy Controls)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(LMM_Pe), digits = 3, comp = "Std.Dev.")
+
+
+# Save model output for plot
+saveRDS(LMM_Pe, file = "./saved_objects_for_plots/LMM_Pe.rds")
+```
+<br><br>
+Analysis of the Pe amplitude indicated that this component was increased after cathodal tDCS relative to sham tDCS, as evidenced by a significant main effect of tDCS condition. No significant main effect of group and no interaction between group and tDCS condition were observed. 
+<br><br><br>
+
+## Control Analyses
+***
+
+### Medication 
+
+We performed additional control analyses to examine whether tDCS effects on ERPs were affected by psychotropic medication. In these analyses, we accounted for possible confounding effects of psychotropic medication by respecifying the fixed effect group as a factor with three levels (control participants, medicated patients with OCD, unmedicated patients with OCD), which was coded using sliding difference contrasts. <br><br>
+This table corresponds to Table S4 in the supplemental material. 
+
+```{r LMM-medication, cache = knitr_cache_enabled, fig.width = 5, fig.height = 4}
+
+# Rum model ERN
+LMM_ERN_medication <- lmer(MFN_0_100_FCz ~ stimulation * group_medication +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+) # Convergence, singularity, PCA checked, all ok
+
+
+# Rum model CRN
+LMM_CRN_medication <- lmer(MFN_0_100_FCz ~ stimulation * group_medication +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "correct", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+) # Convergence, singularity, PCA checked, all ok
+
+
+# Rum model Pe
+LMM_Pe_medication <- lmer(Pe_200_400_Pz ~ stimulation * group_medication +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+) # Convergence, singularity, PCA checked, all ok
+
+
+# Display results (fixed effects) in one table
+tab_model(LMM_ERN_medication, LMM_CRN_medication, LMM_Pe_medication,
+  dv.labels = c("ERN", "CRN", "Pe"), pred.labels = labels, show.stat = TRUE, show.icc = FALSE, 
+  show.r2 = FALSE, show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed 
+  effects", string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  title = "Results of the LMMs Predicting ERN, CRN, and Pe Amplitude as a Function of Stimulation 
+  Condition (Cathodal - Sham) and Group (OCDno med – HC; OCDmed - OCDno med) to Examine 
+  Effects of Psychotropic Medication"
+)
+
+
+# Display random effects
+print("Random effects ERN:")
+print(VarCorr(LMM_ERN_medication), digits = 3, comp = "Std.Dev.")
+
+print("Random effects CRN:")
+print(VarCorr(LMM_CRN_medication), digits = 3, comp = "Std.Dev.")
+
+print("Random effects Pe:")
+print(VarCorr(LMM_Pe_medication), digits = 3, comp = "Std.Dev.")
+```
+<br><br>
+Results remained unchanged, with a trend for a main effect of tDCS on ERN amplitude and a significant main effect of tDCS on CRN and Pe amplitude. 
+<br><br><br>
+
+### P300 Amplitude {.tabset}
+
+#### P300 as dependent variable 
+
+In an exploratory analysis, we fitted a LMM with P300 amplitude as dependent variable to examine the presence of an tDCS effect on this stimulus-locked component. Both correct and incorrect trials were included in this analysis. We entered group, tDCS condition, and response type as predictors. <br><br>
+This table corresponds to Table S5 in the supplemental material. 
+
+```{r LMM-P300-dv, cache = knitr_cache_enabled}
+
+# Run model
+LMM_P3 <- lmer(P3_300_500_CPz ~ stimulation * group * response_type *
+  (1 + stimulation * response_type | participant_id),
+data = single_trial_data_clean,
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_P3)        # Model does converge
+# isSingular(LMM_P3)     # No singular fit
+# summary(rePCA(LMM_P3)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_P3,
+  dv.labels = "P300", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", wrap.labels = 80,
+  title = "Results of the LMM Predicting P300 Amplitude as a Function of Stimulation Condition 
+  (Cathodal - Sham), Group (OCD - Healthy Controls), and Response Type (Incorrect - Correct)"
+)
+
+
+# Display random effects
+print("Random effects")
+print(VarCorr(LMM_P3), digits = 3, comp = "Std.Dev.")
+```
+<br><br>
+Results of this exploratory analysis indicated that the P300 amplitude was modulated (increased) by tDCS. 
+<br><br><br>
+
+#### P300 as covariate {.active}
+
+In an additional (non-preregistered) analysis, we included the within-participant *z*-standardized single-trial P300 amplitude as a covariate into the analysis of the response-locked ERPs. Thereby, we aimed to control for variation in the P300 amplitude, since response-locked ERPs often overlap with this stimulus-locked positivity, which makes inferences about effects on response-locked components more difficult. Specifically, we aimed to control for tDCS-related P300 differences, since the exploratory analysis indicated that the P300 was modulated by tDCS (see tab "P300 as dependent variable"). <br><br>
+This table corresponds to Table S6 in the supplemental material. 
+
+```{r LMM-P300-cov, cache = knitr_cache_enabled}
+
+# Run model ERN
+LMM_ERN_P3 <- lmer(MFN_0_100_FCz ~ stimulation * group * P3_300_500_CPz_standardized  +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+) # Convergence, singularity, PCA checked, all ok
+
+
+# Run model CRN
+LMM_CRN_P3 <- lmer(MFN_0_100_FCz ~ stimulation * group * P3_300_500_CPz_standardized  +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "correct", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+) # Convergence, singularity, PCA checked, all ok
+
+
+# Run model Pe
+LMM_Pe_P3 <- lmer(Pe_200_400_Pz ~ stimulation * group * P3_300_500_CPz_standardized  +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[single_trial_data_clean$response_type == "incorrect", ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+) # Convergence, singularity, PCA checked, all ok
+
+
+# Display results (fixed effects) in one table
+tab_model(LMM_ERN_P3, LMM_CRN_P3, LMM_Pe_P3,
+  dv.labels = c("ERN", "CRN", "Pe"), pred.labels = labels, show.stat = TRUE, show.icc = FALSE, 
+  show.r2 = FALSE, show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed 
+  effects", string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  title = "Results of the LMMs Predicting ERN, CRN, and Pe Amplitude as a Function of Stimulation 
+  Condition (Cathodal - Sham) and Group (OCD - Healthy Controls) With Single-Trial P300 Amplitude 
+  as a Covariate"
+)
+
+
+# Display random effects
+print("Random effects ERN:")
+print(VarCorr(LMM_ERN_P3), digits = 3, comp = "Std.Dev.")
+
+print("Random effects CRN:")
+print(VarCorr(LMM_CRN_P3), digits = 3, comp = "Std.Dev.")
+
+print("Random effects Pe:")
+print(VarCorr(LMM_Pe_P3), digits = 3, comp = "Std.Dev.")
+```
+<br><br>
+When including the P300 as a covariate in the LMMs on ERN, CRN, and Pe amplitude, a significant main effect of the P300 was observed in all models. The effect of tDCS on CRN and Pe remained significant. Importantly, the tDCS-induced reduction in ERN amplitude, previously present as a statistical trend, was now significant. The same applies to the group difference in ERN amplitude, which now also reached significance. 
+<br><br><br>
+
+## References
+***
+Bates, D., Kliegl, R., Vasishth, S., & Baayen, H. (2015). *Parsimonious mixed models.* arXiv. https://arxiv.org/abs/1506.04967v2 <br><br>
+Box, G. E., & Cox, D. R. (1964). An analysis of transformations. *Journal of the Royal Statistical Society: Series B (Methodological), 26*(2), 211-243. https://doi.org/10.1111/j.2517-6161.1964.tb00553.x <br><br>
+Morey, R. (2008). Confidence intervals from normalized data: A correction to Cousineau (2005). *Tutorials in Quantitative Methods for Psychology, 4*(2), 61-64. https://doi.org/10.20982/tqmp.04.2.p061 <br><br>
+Reinhart, R. M., & Woodman, G. F. (2014). Causal control of medial–frontal cortex governs electrophysiological and behavioral indices of performance monitoring and learning. *Journal of Neuroscience, 34*(12), 4214-4227. https://doi.org/10.1523/JNEUROSCI.5421-13.2014 <br><br>
+<br><br>
+
+## Session Info
+***
+
+```{r session-info}
+
+sessionInfo()
+```

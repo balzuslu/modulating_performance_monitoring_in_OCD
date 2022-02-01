@@ -1,0 +1,191 @@
+---
+title: "Participants"
+output: 
+  html_document
+---
+
+<!-- Set general settings -->
+
+```{r setup, include = FALSE}
+
+# Set general settings for markdown file
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE
+)
+
+
+# Clear environment
+rm(list = ls())
+
+
+# Load packages
+library(dplyr)      # for data manipulation
+library(knitr)      # for integrating computing and reporting in markdown
+library(kableExtra) # for customizing appearance of tables
+library(foreign)    # for reading in SPSS file
+library(psych)      # for describeBy function
+library(tidyr)      # for gather and spread function
+
+
+# Load functions
+source("./functions/my_table_template.R")
+
+
+# Turn off scientific notation
+options(scipen = 999)
+```
+<br><br> 
+
+## Sample Description
+***
+
+* The final sample consisted of 28 patients with OCD and 28 healthy control (HC) participants. 
+
+* Patients with OCD and HC participants were individually matched for gender, age, and level of education.
+
+* Patients were recruited from the specialized OCD outpatient clinic at Humboldt-Universität zu Berlin. All patients were diagnosed with OCD as the primary diagnosis, as assessed with the Structured Clinical Interview for DSM-IV (SCID-I; Wittchen et al., 1997).
+
+* General inclusion criteria were age between 18 and 65 years and normal or corrected-to-normal vision. 
+
+* Exclusion criteria for all participants were: lifetime diagnosis of any psychotic, bipolar, or substance-related disorder; use of benzodiazepines in the last week or of neuroleptic medication in the last three months; history of head trauma or neurological disease; any general exclusion criteria for tDCS. 
+
+* Further exclusion criteria for healthy control participants were any current or past psychiatric disorder or current or past psychotherapeutic treatment. 
+
+<br><br>
+
+## Sample Characteristics
+***
+
+This table corresponds to Table 1 in the manuscript.
+
+```{r demographics}
+
+# Load data
+participant_data <- read.spss("./data/Probandendaten.sav", to.data.frame = TRUE)
+questionnaires   <- read.spss("./data/psychoEQExport.sav", to.data.frame = TRUE, add.undeclared.levels = "no")
+
+
+# Select relevant variables
+participant_data <- participant_data[, c("Code", "Alter", "Geschlecht",
+  "Schuljahre", "YBOCS_gesamt", "YBOCS_Gedanken", "YBOCS_Handlungen")]
+questionnaires   <- questionnaires[, c("CODE", "BD2SUMT0", "OCISUMT0")]
+
+
+# Merge dataframes and rename columns
+participant_data$Code <- gsub(" ", "", participant_data$Code, fixed = TRUE) # delete spaces for merging
+demographics <- left_join(participant_data, questionnaires, by = c("Code" = "CODE")) %>%
+  # Rename columns
+  dplyr::rename("participant_id" = Code,
+    "Age (years)"        = Alter,
+    "Gender"             = Geschlecht,
+    "Years of education" = Schuljahre,
+    "Y-BOCS total score" = YBOCS_gesamt,
+    "Y-BOCS obsessions"  = YBOCS_Gedanken,
+    "Y-BOCS compulsions" = YBOCS_Handlungen,
+    "BDI-II"             = BD2SUMT0,
+    "OCI-R"              = OCISUMT0) %>%
+  # Add group variable
+  dplyr::mutate(group = as.factor(ifelse(substr(participant_id, 13, 13) == "C", "HC", "OCD"))) %>%
+  # Exclude P_02 and C_02 and row with NA
+  dplyr::filter(participant_id != "ModERN_tDCS_P02" & participant_id != "ModERN_tDCS_C02" & !is.na(Gender)) %>%
+  # Select and reorder columns
+  dplyr::select(c("group", "Age (years)", "Gender", "Years of education",  "BDI-II",  "OCI-R",
+    "Y-BOCS total score",  "Y-BOCS obsessions",  "Y-BOCS compulsions"))
+
+
+
+### Numeric variables
+
+# Extract demographics per group
+demographics_groups <- list()
+demographics_groups <- psych::describeBy(demographics %>% dplyr::select(-c("Gender", "group")),
+  demographics$group)
+OCD <- as.data.frame(demographics_groups$`OCD`)
+HC  <- as.data.frame(demographics_groups$`HC`)
+
+
+# Create table with demographics formatted as "M (SD)"
+demographics_groups <- as.data.frame(cbind(
+  Characteristic = rownames(OCD),
+  OCD = paste0(format(round(OCD$mean, 2), nsmall = 2), " (", format(round(OCD$sd, 2), nsmall = 2), ")"),
+  HC  = paste0(format(round(HC$mean,  2), nsmall = 2), " (", format(round(HC$sd,  2), nsmall = 2), ")")
+))
+
+
+# Calculate t tests
+t_tests <- demographics %>%
+  dplyr::select("Age (years)", "Years of education",  "BDI-II",  "OCI-R", "group") %>%
+  tidyr::gather(key = Characteristic, value = value, -group) %>%
+  dplyr::group_by(group, Characteristic) %>%
+  dplyr::summarise(value = list(value)) %>%
+  tidyr::spread(group, value) %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Characteristic) %>%
+  dplyr::mutate("Test statistic" = t.test(unlist(HC), unlist(OCD))$statistic,
+    df = t.test(unlist(HC), unlist(OCD))$parameter,
+    p  = t.test(unlist(HC), unlist(OCD))$p.value) %>%
+  dplyr::select(-c(HC, OCD))  %>%
+  dplyr::ungroup()
+
+
+# Combine demographics and t test results
+demographics_numeric <- left_join(demographics_groups, t_tests, by = "Characteristic")
+
+
+
+### Count variables (gender)
+
+# Calculate chi-squared test and extract counts formatted as "female:male"
+gender_test <- chisq.test(demographics$Gender, demographics$group)
+gender      <- demographics %>% dplyr::group_by(group) %>% dplyr::count(Gender)
+gender_OCD  <- paste0(gender[gender$group == "OCD" & gender$Gender == "weiblich", ]$n, ":",
+                      gender[gender$group == "OCD" & gender$Gender == "männlich", ]$n)
+gender_HC   <- paste0(gender[gender$group == "HC"  & gender$Gender == "weiblich", ]$n, ":",
+                      gender[gender$group == "HC"  & gender$Gender == "männlich", ]$n)
+
+
+# Combine demographics and chi-squared test
+demographics_factorial <- as.data.frame(cbind(
+  Characteristic = "Gender (female:male)",
+  OCD = gender_OCD,
+  HC  = gender_HC,
+  "Test statistic" = gender_test$statistic,
+  df = gender_test$parameter,
+  p = gender_test$p.value
+))
+
+
+
+### Create and display table
+
+# Re-order rows and format p values
+table <- rbind(demographics_numeric[c(1), ],
+  demographics_factorial,
+  demographics_numeric[c(2:nrow(demographics_numeric)), ])
+table[, c("df", "Test statistic", "p")] <- as.numeric(unlist(table[, c("df", "Test statistic", "p")]))
+table[, c("p")] <- format.pval(table[, c("p")], eps = 0.001, digits = 3)
+
+
+# Display table
+my_table_template(table, caption = "Demographic and Clinical Characteristics of Patients With OCD and 
+                  HC Participants ", digits = 2) %>%
+  add_footnote("Note. Values are means with standard deviations in parentheses except for gender. 
+               Years of education refer to primary and secondary education, not to higher education. 
+               Test statistic refers to Welch’s t test except for gender, which was analyzed using
+               a chi-squared test. BDI-II = Beck Depression Inventory-II; OCI-R = Obsessive-Compulsive 
+               Inventory-Revised; Y-BOCS = Yale-Brown Obsessive Compulsive Scale.", notation = "none")
+```
+<br><br>
+
+## References
+***
+Wittchen, H., Zaudig, M., & Fydrich, T. (1997). *Strukturiertes Klinisches Interview für DSM–IV. [User’s guide for the Structured Clinical Interview for DSM-IV–German modified version].* Hogrefe. 	
+<br><br>
+
+## Session Info
+***
+```{r session-info}
+
+sessionInfo()
+```

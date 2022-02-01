@@ -1,0 +1,9 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+data/*.sav
+renv/
+2_Behavioral_Data_cache
+3_ERP_Data_cache
+4_Plots_cache

@@ -1,0 +1,425 @@
+---
+title: "Behavioral Data"
+output: 
+  html_document
+---
+
+<!-- Set general settings -->
+
+```{r setup, include = FALSE}
+
+# Set general settings for markdown file
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  comment = "",
+  results = "hold"
+)
+
+
+# Clear environment
+rm(list = ls())
+
+
+# Enable/disable caching of time-consuming code chunks
+knitr_cache_enabled = TRUE
+
+
+# Load packages
+library(dplyr)      # for data wrangling
+library(knitr)      # for integrating computing and reporting in markdown
+library(kableExtra) # for customizing appearance of tables
+library(MASS)       # for boxcox function and contrast definition
+library(lme4)       # for (G)LMMs
+library(lmerTest)   # for LMM p values (Satterthwaite's method for approximating dfs for t and F tests)
+library(sjPlot)     # for tab_model function to display (G)LMM results
+
+
+# Load functions
+source("./functions/summarySEwithinO.R")  # Function provided by R-cookbook: http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/
+source("./functions/my_table_template.R") # Function to create table template
+
+
+# Turn off scientific notation
+options(scipen = 999)
+```
+<br><br> 
+
+## Data Cleaning
+***
+
+```{r load-and-clean-data}
+
+# Load data
+load(file = "./data/Single_Trial_Data.rda")
+
+
+# Exclude missing responses, RT outliers, and trials with ERP artifacts
+single_trial_data_clean <- single_trial_data %>%
+  dplyr::filter(
+      response_type != "miss" &
+      rt_invalid    == FALSE &
+      !is.na(MFN_0_100_FCz)
+  ) # (53093 of 53760 trials left)
+
+
+# Create numeric accuracy variable (1 = correct, 0 = incorrect)
+single_trial_data_clean <- single_trial_data_clean %>%
+  dplyr::mutate(accuracy_numeric = ifelse(response_type == "correct", 1, 0))
+
+
+# Create column with single-trial PES (RT post-error - RT pre-error for all CCEC sequences)
+single_trial_data_clean$pes <- NA
+for (i in 3:(nrow(single_trial_data_clean) - 1)) {
+  if (single_trial_data_clean[i,       ]$response_type == "incorrect" &
+      single_trial_data_clean[(i + 1), ]$response_type == "correct" &
+      single_trial_data_clean[(i - 1), ]$response_type == "correct" &
+      single_trial_data_clean[(i - 2), ]$response_type == "correct" &
+      # Exclude sequences in which a trial was excluded in between
+      single_trial_data_clean[(i + 1), ]$trial - single_trial_data_clean[(i - 1), ]$trial == 2) {
+    single_trial_data_clean[i, ]$pes <- (single_trial_data_clean[(i + 1), ]$rt) - (single_trial_data_clean[(i - 1), ]$rt)
+  }
+}
+
+
+# For each last first and trial in a block, PES cannot be determined; set these values to NA
+single_trial_data_clean[single_trial_data_clean$trial == 1   |
+  single_trial_data_clean$trial == 80  | single_trial_data_clean$trial == 81 |
+  single_trial_data_clean$trial == 160 | single_trial_data_clean$trial == 161 |
+  single_trial_data_clean$trial == 240 | single_trial_data_clean$trial == 241 |
+  single_trial_data_clean$trial == 320 | single_trial_data_clean$trial == 321 |
+  single_trial_data_clean$trial == 400 | single_trial_data_clean$trial == 401 |
+  single_trial_data_clean$trial == 480, "pes"] <- NA
+
+
+# Make categorical variables factors
+single_trial_data_clean$participant_id <- factor(single_trial_data_clean$participant_id)
+single_trial_data_clean$group          <- factor(single_trial_data_clean$group)
+single_trial_data_clean$stimulation    <- factor(single_trial_data_clean$stimulation)
+single_trial_data_clean$response_type  <- factor(single_trial_data_clean$response_type)
+```
+
+Trials with a response time below 100 ms or above 800 ms or with a missing response were excluded from all analyses. We further discarded trials containing artifacts in the EEG, that is, a voltage change exceeding 50 μV between sample points or 200 μV within an epoch. Please see section "ERP Data" for the percentage of excluded trials.
+<br><br><br>
+
+## Descriptive Statistics 
+***
+
+This table corresponds to Table 2 in the manuscript.
+
+```{r descriptive-statistics-table}
+
+# Calculate descriptive statistics for RT
+descriptive_statistics_rt <- summarySEwithinO(
+  data          = single_trial_data_clean,
+  measurevar    = "rt",
+  withinvars    = c("response_type", "stimulation"),
+  betweenvars   = "group",
+  idvar         = "participant_id",
+  conf.interval = .95
+) %>% dplyr::rename(M = rt, M_norm = rt_norm) %>%
+  dplyr::arrange(response_type) %>%
+  dplyr::select(-response_type)
+
+
+# Calculate descriptive statistics for PES
+descriptive_statistics_pes <- summarySEwithinO(
+  data          = single_trial_data_clean[!is.na(single_trial_data_clean$pes), ],
+  measurevar    = "pes",
+  withinvars    = "stimulation",
+  betweenvars   = "group",
+  idvar         = "participant_id",
+  conf.interval = .95
+) %>% dplyr::rename(M = pes, M_norm = pes_norm)
+
+
+# Calculate descriptive statistics for accuracy
+descriptive_statistics_accuracy <- summarySEwithinO(
+  data          = single_trial_data_clean,
+  measurevar    = "accuracy_numeric",
+  withinvars    = "stimulation",
+  betweenvars   = "group",
+  idvar         = "participant_id",
+  conf.interval = .95
+) %>% dplyr::rename(M = accuracy_numeric, M_norm = accuracy_numeric_norm) %>%
+  # Multiply numeric values by 100 to obtain values in percent
+  dplyr::mutate_if(is.numeric, list(~ . * 100))
+
+
+# Combine measures
+descriptive_statistics <- as.data.frame(rbind(descriptive_statistics_rt,
+  descriptive_statistics_pes, descriptive_statistics_accuracy))
+
+
+# Label measures
+descriptive_statistics$Measure <- c(rep("RT correct (ms)", 4), rep("RT error (ms)", 4), 
+                                    rep("PES (ms)", 4), rep("Accuracy (%)", 4))
+
+
+# Create column with format "M [CI]" for RT and PES (round to 0 decimals)
+descriptive_statistics$M_CI <- paste0(round(descriptive_statistics$M, 0), " [",
+  round(descriptive_statistics$M - descriptive_statistics$ci, 0), ", ",
+  round(descriptive_statistics$M + descriptive_statistics$ci, 0), "]")
+
+
+# Create column with format "M [CI]" for accuracy (round to 2 decimals)
+descriptive_statistics[c(13:16), ]$M_CI <- paste0(
+  format(round(descriptive_statistics[c(13:16), ]$M,  2), nsmall = 2), " [",
+  format(round(descriptive_statistics[c(13:16), ]$M -
+               descriptive_statistics[c(13:16), ]$ci, 2), nsmall = 2), ", ",
+  format(round(descriptive_statistics[c(13:16), ]$M +
+               descriptive_statistics[c(13:16), ]$ci, 2), nsmall = 2), "]")
+
+
+# Select relevant columns
+descriptive_statistics <- descriptive_statistics[, c ("group", "stimulation", "Measure", "M_CI")]
+
+
+
+# Split and re-merge table to display both groups next to each other
+descriptive_statistics <- split(descriptive_statistics, list(descriptive_statistics$stimulation, 
+                                                             descriptive_statistics$group))
+descriptive_statistics_display <- cbind(
+  descriptive_statistics$sham.OCD[, c("Measure", "M_CI")],
+  descriptive_statistics$sham.HC[, "M_CI"],
+  descriptive_statistics$verum.OCD[, "M_CI"],
+  descriptive_statistics$verum.HC[, "M_CI"]
+)
+
+
+# Display table
+my_table_template(descriptive_statistics_display,
+  caption = "Behavioral Measures in Patients With OCD and HC Participants",
+  col_names = c(" ", rep("M [95% CI]", 4)),
+  header_above_config = c(" ", rep(c("Patients with OCD", "HC participants"), 2)),
+  footnote_config = c(general = "CIs are adjusted for within-participant designs (Morey, 2008). 
+  RT = response time; PES = post-error slowing.")) %>%
+  add_header_above(c(" " = 1, "Sham tDCS" = 2, "Cathodal tDCS" = 2))
+```
+<br><br>
+
+## (G)LMM Analyses
+***
+
+We analyzed behavioral performance (response time, post-error slowing, and response accuracy) using (generalized) linear mixed models ([G]LMMs) on single-trial data. We tested whether group differences and tDCS effects were present. Group (healthy controls, OCD) and tDCS condition (cathodal, sham) were included as fixed effects in all models. All categorical fixed effects were effect-coded (contrast coefficients −0.5 and 0.5). 
+
+We determined the random-effects structure for each model based on the procedure proposed by Bates et al. (2015), starting with the maximal random-effects structure justified by the design, with by-participant random intercepts and random slopes for all fixed factors and (where applicable) their interactions. If required for model convergence, correlation parameters of the random terms were set to zero. Random effects preventing model convergence or explaining zero variance as determined by principal component analysis were removed to avoid overparameterization.
+
+```{r (G)LMM-contrast-coding}
+
+# Define contrasts (sliding difference contrasts = effect coding for factors with 2 levels)
+contrasts(single_trial_data_clean$stimulation)   <- contr.sdif(2)
+contrasts(single_trial_data_clean$group)         <- contr.sdif(2)
+contrasts(single_trial_data_clean$response_type) <- contr.sdif(2)
+
+
+# Prepare labels for (G)LMM tables
+labels <- c(
+  "(Intercept)"                               = "Intercept",
+  "stimulation2-1"                            = "Stimulation",
+  "group2-1"                                  = "Group",
+  "response_type2-1"                          = "Response type",
+  "stimulation2-1:group2-1"                   = "Stimulation x Group",
+  "stimulation2-1:response_type2-1"           = "Stimulation x Response type",
+  "group2-1:response_type2-1"                 = "Group x Response type",
+  "stimulation2-1:group2-1:response_type2-1"  = "Stimulation x Group x Response type"
+)
+```
+<br><br>
+
+### Response Time {.tabset}
+
+#### Determine data transformation
+
+Response time was log-transformed prior to analysis to meet the assumption of normally distributed residuals. The appropriate transformation was determined using the Box–Cox procedure (Box & Cox, 1964).
+
+```{r RT-determine-transformation, fig.width = 8, fig.height = 3}
+
+# Arrange plots
+par(mfrow = c(1, 3))
+
+
+# Determine transformation by estimating optimal lambda using Box–Cox procedure
+bc_rt <- boxcox(rt ~ 1, data = single_trial_data_clean)
+optlambda_rt <- bc_rt$x[which.max(bc_rt$y)]
+
+
+# Density plot for log-transformed RT values
+plot(density(single_trial_data_clean$rt_log), main = "Log RT: Density  Plot")
+
+
+# Q-q plot for log-transformed RT values
+qqnorm(single_trial_data_clean$rt_log, main = "Log RT: Q-Q Plot", pch = 1)
+
+
+# Reset plot layout
+par(mfrow = c(1, 1))
+```
+The optimal lambda is `r round(optlambda_rt, digits = 2)`, suggesting that log transformation is appropriate. 
+<br><br><br>
+
+#### LMM {.active}
+
+We analyzed response time data using a LMM with response type (correct, error), group, and tDCS condition as predictors. <br><br>
+This table corresponds to Table S1 in the supplemental material. 
+
+```{r LMM-RT, cache = knitr_cache_enabled}
+
+# Run model
+LMM_rt <- lmer(rt_log ~ stimulation * group * response_type +
+  (1 + stimulation * response_type | participant_id),
+data = single_trial_data_clean,
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_rt)        # Model does converge
+# isSingular(LMM_rt)     # No singular fit
+# summary(rePCA(LMM_rt)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_rt,
+  dv.labels = "log(RT)", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE, 
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  wrap.labels = 80, title = "Results of the LMM Predicting RT as a Function of Stimulation Condition 
+  (Cathodal - Sham), Group (OCD - Healthy Controls), and Response Type (Incorrect - Correct)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(LMM_rt), digits = 1, comp = "Std.Dev.")
+```
+<br><br>
+Response time analysis revealed a significant main effect of response type, indicating that responses were faster for errors than for correct responses. Response time did not differ significantly between groups or tDCS conditions and there was no significant interaction between any of the factors.
+<br><br><br>
+
+### Post-Error Slowing {.tabset}
+
+#### Determine data transformation
+
+No data transformation was required to meet the assumption of normally distributed residuals. This was determined using the Box–Cox procedure (Box & Cox, 1964).
+
+```{r PES-determine-transformation, fig.width = 8, fig.height = 3}
+
+# Arrange plots
+par(mfrow = c(1, 3))
+
+
+# Determine transformation by estimating optimal lambda using Box–Cox procedure
+bc_pes <- boxcox(pes + 1000 ~ 1, data = single_trial_data_clean[!is.na(single_trial_data_clean$pes), ])
+optlambda_pes <- bc_pes$x[which.max(bc_pes$y)]
+
+
+# Density plot for PES values
+plot(density(single_trial_data_clean[!is.na(single_trial_data_clean$pes), ]$pes), main = "PES: Density  Plot")
+
+
+# Q-q plot for PES values
+qqnorm(single_trial_data_clean[!is.na(single_trial_data_clean$pes), ]$pes, main = "PES: Q-Q Plot", pch = 1)
+
+
+# Reset plot layout
+par(mfrow = c(1, 1))
+```
+The optimal lambda is `r round(optlambda_pes, digits = 2)`, suggesting that no transformation is needed.
+<br><br><br>
+
+#### LMM {.active}
+
+For the analysis of PES, we fitted a LMM on single-trial values that were calculated as the response time difference between correct responses that directly preceded and followed an error. This PES quantification results in a measure that is not confounded by fluctuations in motivation or response caution over time (Dutilh et al., 2012). In this analysis, we considered only error trials that were preceded by at least two correct trials and followed by at least one correct trial. Model estimates of the LMM on PES directly reflect mean differences in milliseconds. <br><br>
+This table corresponds to Table S2 in the supplemental material. 
+
+```{r LMM-PES}
+
+# Run model
+LMM_pes <- lmer(pes ~ stimulation * group +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean[!is.na(single_trial_data_clean$pes), ],
+REML = TRUE,
+control = lmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(LMM_pes)        # Model does converge
+# isSingular(LMM_pes)     # No singular fit
+# summary(rePCA(LMM_pes)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(LMM_pes,
+  dv.labels = "PES", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "t", string.ci = "95 % CI", p.val = "satterthwaite", 
+  title = "Results of the LMM Predicting PES as a Function of Stimulation Condition 
+  (Cathodal - Sham) and Group (OCD - Healthy Controls)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(LMM_pes), digits = 4, comp = "Std.Dev.")
+```
+<br><br>
+The LMM on PES yielded a significant intercept, reflecting that participants slowed down after error commission. The groups did not differ significantly in PES. There was no significant main effect of tDCS condition and no interaction between group and tDCS condition.
+<br><br><br>
+
+### Response Accuracy 
+
+Response accuracy was analyzed using a binomial generalized linear mixed model (GLMM). For the GLMM on accuracy, estimates reflect odds ratios for a correct response. <br><br>
+This table corresponds to Table S2 in the supplemental material. 
+
+```{r GLMM-accuracy, cache = knitr_cache_enabled}
+
+# Run model
+GLMM_accuracy <- glmer(accuracy_numeric ~ stimulation * group +
+  (1 + stimulation | participant_id),
+data = single_trial_data_clean,
+family = binomial,
+control = glmerControl(optimizer = "bobyqa")
+)
+
+
+# Check model output and PCA of random-effects variance-covariance estimates
+# summary(GLMM_accuracy)        # Model does converge
+# isSingular(GLMM_accuracy)     # No singular fit
+# summary(rePCA(GLMM_accuracy)) # All terms explain variance
+
+
+# Display results (fixed effects)
+tab_model(GLMM_accuracy,
+  dv.labels = "Accuracy", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
+  show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
+  string.est = "b", string.stat = "z", string.ci = "95 % CI", title = "Results of the Binomial GLMM 
+  Predicting Response Accuracy as a Function of Stimulation Condition (Cathodal - Sham) and 
+  Group (OCD - Healthy Controls)"
+)
+
+
+# Display random effects
+print("Random effects:")
+print(VarCorr(GLMM_accuracy), digits = 2, comp = "Std.Dev.")
+```
+<br><br>
+Results of the GLMM indicated that there was no significant difference in response accuracy between groups or tDCS conditions and no significant interaction between group and tDCS condition.
+<br><br><br>
+
+## References
+***
+Bates, D., Kliegl, R., Vasishth, S., & Baayen, H. (2015). *Parsimonious mixed models.* arXiv. https://arxiv.org/abs/1506.04967v2 <br><br>
+Box, G. E., & Cox, D. R. (1964). An analysis of transformations. *Journal of the Royal Statistical Society: Series B (Methodological), 26*(2), 211-243. https://doi.org/10.1111/j.2517-6161.1964.tb00553.x <br><br>
+Dutilh, G., van Ravenzwaaij, D., Nieuwenhuis, S., van der Maas, H. L. J., Forstmann, B. U., & Wagenmakers, E.-J. (2012). How to measure post-error slowing: A confound and a simple solution. *Journal of Mathematical Psychology, 56*(3), 208-216. https://doi.org/10.1016/j.jmp.2012.04.001 <br><br>
+Morey, R. (2008). Confidence intervals from normalized data: A correction to Cousineau (2005). *Tutorials in Quantitative Methods for Psychology, 4*(2), 61-64. https://doi.org/10.20982/tqmp.04.2.p061 <br><br>
+<br><br>
+
+## Session Info
+***
+```{r session-info}
+
+sessionInfo()
+```

@@ -1,0 +1,525 @@
+---
+title: "Plots"
+output: 
+  html_document
+---
+
+<!-- Set general settings -->
+
+```{r setup, include = FALSE}
+
+# Set general settings for markdown file
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  comment = "",
+  results = "hold"
+)
+
+
+# Clear environment
+rm(list = ls())
+
+
+# Enable/disable caching of time-consuming code chunks
+knitr_cache_enabled = TRUE
+
+
+# Load packages
+library(dplyr)      # for data manipulation
+library(ggplot2)    # for plotting
+library(cowplot)    # for arranging plots
+library(purrr)      # for calculating within-participant CIs
+library(eegUtils)   # for plotting topographies
+library(tidyr)      # for gather function
+library(sjPlot)     # for plot_model function
+library(lemon)      # for function facet_rep_grid, to repeat y axis in facets
+
+
+# Load functions
+source("./functions/summarySEwithinO.R")  # Function provided by R-cookbook: http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/
+source("./functions/R_rainclouds.R")      # Function to create raincloud plots 
+
+
+# Define function to create common legend (from http://www.sthda.com/english/wiki/wiki.php?id_contents=7930#add-a-common-legend-for-multiple-ggplot2-graphs)
+get_legend <- function(myggplot) {
+  tmp      <- ggplot_gtable(ggplot_build(myggplot))
+  leg      <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend   <- tmp$grobs[[leg]]
+  return(legend)
+}
+
+
+# Set figure theme
+my_figure_theme <- theme_classic(base_size = 11) + 
+  theme(legend.position = "bottom",
+        strip.background = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+
+# Set figure colors
+colors_ERN <- c("royalblue1", "navy")
+colors_CRN <- c("tan1", "sienna3")
+colors_Pe  <- c("darkolivegreen3", "seagreen")
+```
+
+<!-- Load and clean data -->
+
+```{r load-and-clean-data}
+
+# Load data
+resp_locked_data <- read.csv(file = "./data/response_locked_data_for_plots.csv", header = TRUE)
+
+
+# Create relevant variables
+resp_locked_data <- resp_locked_data %>%
+  dplyr::mutate(
+    stimulation = factor(ifelse(
+      participant_id == "C_01_T1" | participant_id == "C_02_T1" | participant_id == "C_03_T2" |
+      participant_id == "C_04_T2" | participant_id == "C_05_T1" | participant_id == "C_06_T2" |
+      participant_id == "C_07_T1" | participant_id == "C_08_T1" | participant_id == "C_09_T2" |
+      participant_id == "C_10_T2" | participant_id == "C_11_T2" | participant_id == "C_12_T2" |
+      participant_id == "C_13_T1" | participant_id == "C_15_T2" | participant_id == "C_16_T1" |
+      participant_id == "C_17_T2" | participant_id == "C_18_T2" | participant_id == "C_19_T1" |
+      participant_id == "C_20_T1" | participant_id == "C_21_T2" | participant_id == "C_22_T2" |
+      participant_id == "C_23_T1" | participant_id == "C_24_T1" | participant_id == "C_25_T1" |
+      participant_id == "C_26_T1" | participant_id == "C_27_T2" | participant_id == "C_28_T2" |
+      participant_id == "C_29_T1" | participant_id == "C_30_T2" | participant_id == "P_01_T1" |
+      participant_id == "P_02_T2" | participant_id == "P_03_T2" | participant_id == "P_04_T1" |
+      participant_id == "P_05_T1" | participant_id == "P_06_T1" | participant_id == "P_07_T2" |
+      participant_id == "P_08_T2" | participant_id == "P_09_T2" | participant_id == "P_10_T1" |
+      participant_id == "P_11_T2" | participant_id == "P_12_T2" | participant_id == "P_13_T1" |
+      participant_id == "P_15_T1" | participant_id == "P_16_T1" | participant_id == "P_17_T2" |
+      participant_id == "P_18_T1" | participant_id == "P_19_T1" | participant_id == "P_20_T2" |
+      participant_id == "P_21_T2" | participant_id == "P_22_T1" | participant_id == "P_23_T1" |
+      participant_id == "P_24_T2" | participant_id == "P_25_T1" | participant_id == "P_26_T2" |
+      participant_id == "P_27_T1" | participant_id == "P_28_T2" | participant_id == "P_29_T2" |
+      participant_id == "P_30_T1", "sham", "verum")),
+    condition = factor(ifelse(condition == 1, "correct", "incorrect"), 
+                       levels = c("incorrect", "correct")),
+    group          = factor(ifelse(substr(participant_id, 1, 1) == "C", "HC", "OCD")),
+    session        = factor(ifelse(substr(participant_id, 6, 7) == "T1", "T1", "T2")),
+    participant_id = factor(substr(participant_id, 1, 4)), # to get correct no. of factor levels
+    condition      = factor(condition, levels = c("incorrect", "correct")),
+  )
+
+
+# Exclude P_02 and C_02
+resp_locked_data <- resp_locked_data[resp_locked_data$participant_id != "P_02" &
+                                     resp_locked_data$participant_id != "C_02", ]
+resp_locked_data$participant_id <- droplevels(resp_locked_data$participant_id)
+
+
+# Calculate running within-participant CIs for ERN/CRN
+running_CIs_MFN <- resp_locked_data %>%
+  split(.$time) %>%
+  map(~ summarySEwithinO(data        = .,
+                         measurevar  = "FCz",
+                         withinvars  = c("condition", "stimulation"),
+                         betweenvars = "group",
+                         idvar       = "participant_id"))
+
+CIs_MFN <- purrr::map_df(running_CIs_MFN, magrittr::extract) %>%
+  dplyr::mutate(
+    time = rep(unique(resp_locked_data$time), each = 8)
+  ) # Note. 8 refers to  no. of conditions (group x stimulation x resp_type = 2 x 2 x 2 = 8)
+
+
+# Calculate running within-participant CIs for Pe
+running_CIs_Pe <- resp_locked_data %>%
+  split(.$time) %>%
+  map(~ summarySEwithinO(data        = .,
+                         measurevar  = "Pz",
+                         withinvars  = c("condition", "stimulation"),
+                         betweenvars = "group",
+                         idvar       = "participant_id"))
+
+CIs_Pe <- purrr::map_df(running_CIs_Pe, magrittr::extract) %>%
+  dplyr::mutate(
+    time = rep(unique(resp_locked_data$time), each = 8)
+  )
+
+
+# Convert to long format for electrodes for ERN/CRN
+data_topo_MFN <- resp_locked_data %>%
+  # Remove channels of no interest
+  dplyr::select(-IO1, -M1, -F9, -F10) %>%
+  # Change from wide to long format for electrodes
+  tidyr::gather(., electrode, amplitude, Fp1:O2, factor_key = TRUE)  %>%
+  # Select time windows
+  dplyr::filter(time >= 0 & time <= 100) %>%
+  # Add electrode information
+  electrode_locations(., electrode = "electrode", drop = FALSE, montage = NULL)
+
+
+# Convert to long format for electrodes for Pe
+data_topo_Pe <- resp_locked_data %>%
+  # Remove channels of no interest
+  dplyr::select(-IO1, -M1, -F9, -F10) %>%
+  # Change from wide to long format for electrodes
+  tidyr::gather(., electrode, amplitude, Fp1:O2, factor_key = TRUE)  %>%
+  # Select time windows
+  dplyr::filter(time >= 200 & time <= 400) %>%
+  # Add electrode information
+  electrode_locations(., electrode = "electrode", drop = FALSE, montage = NULL)
+```
+
+<!-- Create plots -->
+
+```{r create-plots}
+
+#### Create plots of predicted means ####
+
+# Load LMM output
+LMM_ERN <- readRDS(file = "./saved_objects_for_plots/LMM_ERN.rds")
+LMM_CRN <- readRDS(file = "./saved_objects_for_plots/LMM_CRN.rds")
+LMM_Pe  <- readRDS(file = "./saved_objects_for_plots/LMM_Pe.rds")
+
+
+# ERN
+plot_LMM_ERN <- plot_model(LMM_ERN, type = "pred", terms  = c("group", "stimulation"),
+                           ci.lvl = .95, title = "", dodge = 0.4, line.size = .5) +
+  labs(x  = "", y = "Predicted ERN Amplitude (µV)") +
+  my_figure_theme +
+  aes(color = group) +
+  scale_color_manual(name = "tDCS", labels = c("sham", "cathodal"), values = colors_ERN) +
+  coord_cartesian(ylim = c(-9, 3), xlim = c(0.5, 2.5)) +
+  scale_y_continuous(breaks = seq(-9, 3, 2), expand = c(0, 0)) +
+  scale_x_continuous(labels = c("HC", "OCD"), breaks = c(1, 2), expand = c(0, 0)) +
+  theme(axis.ticks.x = element_blank(), legend.position = "none")
+
+
+# CRN
+plot_LMM_CRN <- plot_model(LMM_CRN, type = "pred", terms  = c("group", "stimulation"),
+                           ci.lvl = .95, title = "", dodge = 0.4, line.size = .5) +
+  labs(x  = "", y = "Predicted CRN Amplitude (µV)") +
+  my_figure_theme +
+  aes(color = group) +
+  scale_color_manual(name = "tDCS", labels = c("sham", "cathodal"), values = colors_CRN) +
+  coord_cartesian(ylim = c(1, 9), xlim = c(0.5, 2.5)) +
+  scale_y_continuous(breaks = seq(1, 9, 2), expand = c(0, 0))  +
+  scale_x_continuous(labels = c("HC", "OCD"), breaks = c(1, 2), expand = c(0, 0)) +
+  theme(axis.ticks.x = element_blank(), legend.position = "none")
+
+
+# Pe
+plot_LMM_Pe <- plot_model(LMM_Pe,type = "pred", terms  = c("group", "stimulation"),
+                          ci.lvl = .95, title = "", dodge = 0.4, line.size = .5) +
+  labs(x  = "", y = "Predicted Pe Amplitude (µV)") +
+  my_figure_theme +
+  aes(color = group) +
+  scale_color_manual(name = "tDCS", labels = c("sham", "cathodal"), values = colors_Pe) +
+  coord_cartesian(ylim = c(5.8, 14), xlim = c(0.5, 2.5)) +
+  scale_y_continuous(breaks = seq(6, 14, 2), expand = c(0, 0)) +
+  scale_x_continuous(labels = c("HC", "OCD"), breaks = c(1, 2), expand = c(0, 0)) +
+  theme(axis.ticks.x = element_blank(), legend.position = "none")
+
+
+#### Create boxplots with probability density plots ####
+
+# Load data
+load(file = "./data/Single_Trial_Data.rda")
+
+
+# Exclude missing responses, RT outliers, and trials with ERP artifacts
+single_trial_data_clean <- single_trial_data %>%
+  dplyr::filter(
+      response_type != "miss" &
+      rt_invalid    == FALSE &
+      !is.na(MFN_0_100_FCz)
+  ) # (53093 of 53760 trials left)
+
+
+# Aggregate data
+data_aggregated <- single_trial_data_clean %>%
+  dplyr::group_by(participant_id, group, response_type, stimulation, session) %>%
+  dplyr::summarize(
+    MFN = mean(MFN_0_100_FCz, na.rm = TRUE),
+    Pe  = mean(Pe_200_400_Pz, na.rm = TRUE)
+   )  %>%
+  dplyr::ungroup()
+
+
+# ERN
+plot_box_density_ERN <- ggplot() +
+  geom_flat_violin(data = data_aggregated[data_aggregated$response_type == "incorrect", ],
+                   aes(x = group, y = MFN, fill = stimulation), 
+                   position = position_nudge(x = .2, y = 0),
+                   adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  geom_boxplot(data = data_aggregated[data_aggregated$response_type == "incorrect", ],
+               aes(x = group, y = MFN, fill = stimulation), 
+               position = position_dodge(width = 0.3),
+               outlier.shape = NA, width = .2, alpha = .8, colour = "black") +
+  scale_fill_manual(values = colors_ERN, name = "tDCS:") +
+  labs(x = "", y = "ERN Amplitude (µV)") +
+  coord_cartesian(ylim = c(-35, 25), xlim = c(1.15, 2.25)) +
+  scale_y_continuous(breaks = seq(-35, 25, 10), expand = c(0, 0)) +
+  my_figure_theme  +
+  theme(legend.position = "none", axis.ticks.x = element_blank())
+
+
+# CRN
+plot_box_density_CRN <- ggplot() +
+  geom_flat_violin(data = data_aggregated[data_aggregated$response_type == "correct", ],
+                   aes(x = group, y = MFN, fill = stimulation), 
+                   position = position_nudge(x = .2, y = 0),
+                   adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  geom_boxplot(data = data_aggregated[data_aggregated$response_type == "correct", ],
+               aes(x = group, y = MFN, fill = stimulation), 
+               position = position_dodge(width = 0.3),
+               outlier.shape = NA, width = .2, colour = "black") +
+  scale_fill_manual(values = colors_CRN, name = "tDCS:") +
+  labs(x = "", y = "CRN Amplitude (µV)") +
+  coord_cartesian(ylim = c(-15, 25), xlim = c(1.15, 2.25)) +
+  scale_y_continuous(breaks = seq(-15, 25, 10), expand = c(0, 0)) +
+  my_figure_theme  +
+  theme(legend.position = "none", axis.ticks.x = element_blank(), 
+        axis.title.y = element_text(vjust = -1))
+
+
+# Pe
+plot_box_density_Pe <- ggplot() +
+  geom_flat_violin(data = data_aggregated[data_aggregated$response_type == "incorrect", ],
+                   aes(x = group, y = Pe, fill = stimulation), 
+                   position = position_nudge(x = .2, y = 0),
+                   adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  geom_boxplot(data = data_aggregated[data_aggregated$response_type == "incorrect", ],
+               aes(x = group, y = Pe, fill = stimulation), 
+               position = position_dodge(width = 0.3),
+               outlier.shape = NA, width = .2, colour = "black") +
+  scale_fill_manual(values = colors_Pe, name = "tDCS:") +
+  labs(x = "", y = "Pe Amplitude (µV)") +
+  coord_cartesian(ylim = c(-10, 30), xlim = c(1.15, 2.25)) +
+  scale_y_continuous(breaks = seq(-10, 30, 10), expand = c(0, 0)) +
+  my_figure_theme  +
+  theme(legend.position = "none", axis.ticks.x = element_blank(), 
+        axis.title.y = element_text(vjust = -.5))
+
+
+#### Create waveform plots ####
+
+# Define facet labels
+group.labs <- c("Healthy Control Participants ", "Patients With OCD")
+names(group.labs) <- c("HC", "OCD")
+
+
+# Define electrode labels
+label_FCz <- data.frame(time = -320, FCz = 11.5, lab = "Text", group = factor("HC", levels = c("HC", "OCD")))
+label_Pz  <- data.frame(time = -320, Pz  = 11.6, lab = "Text", group = factor("HC", levels = c("HC", "OCD")))
+
+
+# ERN/CRN
+plot_waveform_MFN <- ggplot(resp_locked_data, aes(time, FCz)) +
+  stat_summary(fun = mean, geom = "line", size = 0.5, linetype = "solid", aes(colour = condition:stimulation)) +
+  geom_ribbon(data = CIs_MFN, aes(ymin = FCz - ci, ymax = FCz + ci, fill = condition:stimulation), alpha = 0.2) +
+  guides(fill = "none") +
+  geom_segment(aes(x = 0, xend = 0, y = -10, yend = 12), linetype = "dotted", colour = "grey50") + # Add vline
+  geom_segment(aes(x = -400, xend = 800, y = 0, yend = 0), linetype = "dotted", colour = "grey50") + # Add hline
+  geom_text(data = label_FCz, label = "FCz") + # 
+  annotate("rect", xmin = 0, xmax = 100, ymin = -10, ymax = 12, alpha = .2, fill = "grey50") + # Add shaded time area
+  coord_cartesian(ylim = c(-10, 12), xlim = c(-400, 800)) +
+  scale_y_continuous(breaks = seq(-10, 12, 2), expand = c(0, 0)) +
+  scale_x_continuous(breaks = seq(-400, 800, 200), expand = c(0, 0)) +
+  scale_colour_manual(values = c(colors_ERN, colors_CRN), 
+                      labels = c("Error: Sham", "Error: Cathodal", "Correct: Sham", "Correct: Cathodal"),
+                      guide = guide_legend(override.aes = list(size = 1.3))) + # Thickness legend lines
+  scale_fill_manual(values = c(colors_ERN, colors_CRN)) +
+  labs(x = "Time (ms)", y = expression(paste("Amplitude (", mu, "V)"))) +
+  facet_rep_grid(cols = vars(group), labeller = labeller(group = group.labs), repeat.tick.labels = TRUE) +
+  my_figure_theme +
+  theme(strip.text.x = element_text(margin = margin(0, 0, 4, 0, "cm"), size = 12, face = "bold"),
+        axis.title.y = element_text(vjust = -1.5), panel.spacing = unit(0.75, "cm"),
+        legend.title = element_blank(), legend.text = element_text(size = 11))
+
+
+# Pe
+plot_waveform_Pe <- ggplot(resp_locked_data[resp_locked_data$condition == "incorrect", ], aes(time, Pz)) +
+  stat_summary(fun = mean, geom = "line", size = 0.5, linetype = "solid", aes(colour = condition:stimulation)) +
+  geom_ribbon(data = CIs_Pe[CIs_Pe$condition == "incorrect", ], 
+              aes(ymin = Pz - ci, ymax = Pz + ci, fill = condition:stimulation), alpha = 0.2) +
+  guides(fill = "none") +
+  geom_segment(aes(x = 0, xend = 0, y = -2, yend = 12), linetype = "dotted", colour = "grey50") +
+  geom_segment(aes(x = -400, xend = 800, y = 0, yend = 0), linetype = "dotted", colour = "grey50") +
+  geom_text(data = label_Pz, label = "Pz") +
+  annotate("rect", xmin = 200, xmax = 400, ymin = -2, ymax = 12, alpha = .2, fill = "grey50") +
+  coord_cartesian(ylim = c(-2, 12), xlim = c(-400, 800)) +
+  scale_y_continuous(breaks = seq(-2, 12, 2), expand = c(0, 0)) +
+  scale_x_continuous(breaks = seq(-400, 800, 200), expand = c(0, 0)) +
+  scale_colour_manual(values = colors_Pe, 
+                      labels = c("Error: Sham", "Error: Cathodal"),
+                      guide = guide_legend(override.aes = list(size = 1.3))) +
+  scale_fill_manual(values = colors_Pe) +
+  labs(x = "Time (ms)", y = expression(paste("Amplitude (", mu, "V)"))) +
+  facet_rep_grid(cols = vars(group), labeller = labeller(group = group.labs), repeat.tick.labels = TRUE) +
+  my_figure_theme +
+  theme(strip.text.x = element_text(margin = margin(0, 0, 3.5, 0, "cm"), size = 11, face = "bold"), 
+        axis.title.y = element_text(vjust = -1.5), panel.spacing = unit(0.75, "cm"),
+        legend.title = element_blank(), legend.text = element_text(size = 11))
+
+
+# Get legend and remove individual legends from plot to create common legend
+legend_MFN        <- get_legend(plot_waveform_MFN)
+legend_Pe         <- get_legend(plot_waveform_Pe)
+plot_waveform_MFN <- plot_waveform_MFN + theme(legend.position = "none")
+plot_waveform_Pe  <- plot_waveform_Pe  + theme(legend.position = "none")
+
+
+#### Create topography plots ####
+
+# Define facet labels
+stimulation.labs_incorr <- c("Error: Sham", "Error: Cathodal")
+names(stimulation.labs_incorr) <- c("sham", "verum")
+
+stimulation.labs_corr <- c("Correct: Sham", "Correct: Cathodal")
+names(stimulation.labs_corr) <- c("sham", "verum")
+
+
+# ERN HC
+plot_topo_HC_ERN <- ggplot(data_topo_MFN[data_topo_MFN$group == "HC" & data_topo_MFN$condition == "incorrect", ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = "head", chan_markers = "point", chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = "RdBu", limits = c(-5.1, 6.5), breaks = c(-5, 0, 5)) + #
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, "V"))) +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7, color = "grey30"),
+        legend.title = element_text(size = 7, color = "grey30"), legend.key.height = unit(0.25, 'cm'),
+        legend.key.width = unit(0.25, 'cm'), strip.text.x = element_text(size = 7)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_incorr))
+
+
+# ERN OCD
+plot_topo_OCD_ERN <- ggplot(data_topo_MFN[data_topo_MFN$group == "OCD" & data_topo_MFN$condition == "incorrect", ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = "head", chan_markers = "point", chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = "RdBu", limits = c(-5.1, 6.5), breaks = c(-5, 0, 5)) + #
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, "V"))) +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7, color = "grey30"),
+        legend.title = element_text(size = 7, color = "grey30"), legend.key.height = unit(0.25, 'cm'),
+        legend.key.width = unit(0.25, 'cm'), strip.text.x = element_text(size = 7)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_incorr))
+
+
+# CRN HC
+plot_topo_HC_CRN <- ggplot(data_topo_MFN[data_topo_MFN$group == "HC" & data_topo_MFN$condition == "correct", ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = "head", chan_markers = "point", chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = "RdBu", limits = c(0.5, 11.7), breaks = c(2, 6, 10)) + #
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, "V"))) +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7, color = "grey30"),
+        legend.title = element_text(size = 7, color = "grey30"), legend.key.height = unit(0.25, 'cm'),
+        legend.key.width = unit(0.25, 'cm'), strip.text.x = element_text(size = 7)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_corr))
+
+
+# CRN OCD
+plot_topo_OCD_CRN <- ggplot(data_topo_MFN[data_topo_MFN$group == "OCD" & data_topo_MFN$condition == "correct", ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = "head", chan_markers = "point", chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = "RdBu", limits = c(0.5, 11.7), breaks = c(2, 6, 10)) + #
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, "V"))) +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7, color = "grey30"),
+        legend.title = element_text(size = 7, color = "grey30"), legend.key.height = unit(0.25, 'cm'),
+        legend.key.width = unit(0.25, 'cm'), strip.text.x = element_text(size = 7)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_corr))
+
+
+# Pe HC
+plot_topo_HC_Pe <- ggplot(data_topo_Pe[data_topo_Pe$group == "HC" & data_topo_Pe$condition == "incorrect", ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = "head", chan_markers = "point", chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = "RdBu", limits = c(2, 10.4)) + 
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, "V"))) +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7, color = "grey30"),
+        legend.title = element_text(size = 7, color = "grey30"), legend.key.height = unit(0.25, 'cm'),
+        legend.key.width = unit(0.25, 'cm'), strip.text.x = element_text(size = 6.5)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_incorr))
+
+
+# Pe OCD
+plot_topo_OCD_Pe <- ggplot(data_topo_Pe[data_topo_Pe$group == "OCD" & data_topo_Pe$condition == "incorrect", ],
+  aes(x = x, y = y, fill = amplitude, label = electrode)) +
+  geom_topo(grid_res = 300, interp_limit = "head", chan_markers = "point", chan_size = 0.1, head_size = 0.2) +
+  scale_fill_distiller(palette = "RdBu", limits = c(2, 10.4)) + 
+  theme_void() +
+  coord_equal() +
+  labs(fill = expression(paste(mu, "V"))) +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7, color = "grey30"),
+        legend.title = element_text(size = 7, color = "grey30"), legend.key.height = unit(0.25, 'cm'),
+        legend.key.width = unit(0.25, 'cm'), strip.text.x = element_text(size = 6.5)) +
+  facet_grid(cols = vars(stimulation), labeller = labeller(stimulation = stimulation.labs_incorr))
+```
+
+## ERN & CRN
+***
+
+This figure corresponds to Figure 1 in the manuscript.
+
+```{r arrange-plots-ERN-CRN, fig.width = 8, fig.height = 10, cache = knitr_cache_enabled, dpi = 600, fig.cap = "Note. (A) Response-locked grand average waveforms with 95% confidence intervals (CIs) for correct and incorrect responses at electrode site FCz in the sham and cathodal tDCS condition for patients with OCD and HC participants, along with topographies of ERN and CRN (0–100 ms). Gray-shaded areas in the waveform plots indicate the time window used for ERN and CRN quantification. (B) ERN and CRN mean amplitude values per group and tDCS condition are presented as boxplots and probability density plots based on raw data. (C) Predicted ERN and CRN mean amplitude values by group and tDCS condition, calculated as partial effects from linear mixed models. Error bars represent 95% CIs."}
+
+# Overlay waveforms and topopgraphy plots
+aligned_plots1_MFN <- align_plots(plot_waveform_MFN, plot_topo_HC_ERN,  axis = "tr")
+aligned_plots2_MFN <- align_plots(plot_waveform_MFN, plot_topo_HC_CRN,  axis = "tr")
+aligned_plots3_MFN <- align_plots(plot_waveform_MFN, plot_topo_OCD_ERN, axis = "tr")
+aligned_plots4_MFN <- align_plots(plot_waveform_MFN, plot_topo_OCD_CRN, axis = "tr")
+
+
+# Arrange plots
+figure_ERN_CRN <- ggdraw() +
+  draw_plot(aligned_plots1_MFN[[1]],  x =  0,   y = .42,  width = .99, height = .56) +
+  draw_plot(aligned_plots1_MFN[[2]],  x = .073, y = .795, width = .2,  height = .15) +
+  draw_plot(aligned_plots2_MFN[[2]],  x = .293, y = .795, width = .2,  height = .15) +
+  draw_plot(aligned_plots3_MFN[[2]],  x = .563, y = .795, width = .2,  height = .15) +
+  draw_plot(aligned_plots4_MFN[[2]],  x = .783, y = .795, width = .2,  height = .15) +
+  draw_plot(legend_MFN,               x = .318, y = .4,   width = .4,  height = .01) +
+  draw_plot(plot_box_density_ERN,     x = .01,  y = .04,  width = .3,  height = .29) +
+  draw_plot(plot_LMM_ERN,             x = .6,   y = .04,  width = .2,  height = .32) +
+  draw_plot(plot_box_density_CRN,     x = .3,   y = .04,  width = .3,  height = .29) +
+  draw_plot(plot_LMM_CRN,             x = .8,   y = .04,  width = .2,  height = .32) +
+  draw_plot(legend_MFN,               x = .318, y = .035, width = .4,  height = .01) +
+  draw_plot_label(c("A", "B", "C"), c(0, 0, .59), c(1, .36, .36), size = 15)
+figure_ERN_CRN
+
+
+# Save plot
+ggsave(plot = figure_ERN_CRN, "./figures/figure_ERN_CRN.tiff", width = 20, height = 24,
+       units = "cm", dpi = 600, compression = "lzw")
+```
+<br><br>
+
+## Pe
+***
+
+This figure corresponds to Figure 2 in the manuscript.
+
+```{r arrange-plots-Pe, fig.width = 8, fig.height = 4, cache = knitr_cache_enabled, dpi = 600, fig.cap = "Note. (A) Response-locked grand average waveforms with 95% confidence intervals (CIs) for incorrect responses at electrode site Pz in the sham and cathodal tDCS condition for patients with OCD and HC participants, along with topographies of the Pe (200–400 ms). Gray-shaded areas in the waveform plots indicate the time window used for Pe quantification. (B) Pe mean amplitude values per group and tDCS condition are presented as boxplots and probability density plots based on raw data. (C) Predicted Pe mean amplitude values by group and tDCS condition, calculated as partial effects from linear mixed models. Error bars represent 95% CIs."}
+
+# Overlay waveforms and tpopgraphy plots
+aligned_plots1_Pe  <- align_plots(plot_waveform_Pe, plot_topo_HC_Pe,  axis = "tr")
+aligned_plots2_Pe  <- align_plots(plot_waveform_Pe, plot_topo_OCD_Pe, axis = "tr")
+
+
+# Arrange plots
+figure_Pe <- ggdraw() +
+  draw_plot(aligned_plots1_Pe[[1]], x =  0,   y = .05,  width = .765, height = .92) +
+  draw_plot(aligned_plots1_Pe[[2]], x = .07,  y = .664, width = .3,   height = .22) +
+  draw_plot(aligned_plots2_Pe[[2]], x = .447, y = .664, width = .3,   height = .22) +
+  draw_plot(plot_box_density_Pe,    x = .77,  y = .48,  width = .25,  height = .47) +
+  draw_plot(plot_LMM_Pe,            x = .774, y = .05,  width = .25,  height = .48) +
+  draw_plot(legend_Pe,              x = .3,   y = .01,  width = .2,   height = .01) +
+  draw_plot_label(c("A", "B", "C"), c(0, .75, .75), c(1, 1, .58), size = 15)
+figure_Pe
+
+
+# Save plot
+ggsave(plot = figure_Pe, "./figures/figure_Pe.tiff", width = 20, height = 12,
+       units = "cm", dpi = 600, compression = "lzw")
+```
