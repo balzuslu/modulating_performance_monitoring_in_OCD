@@ -1,6 +1,6 @@
 ## Content of this repository
 
-This repository contains data and code for the manuscript "Non-Invasive Brain Stimulation Modulates Performance Monitoring in Patients With Obsessive-Compulsive Disorder" by Luisa Balzus, Julia Klawohn, Sein Schmidt, Stephan A. Brandt, and Norbert Kathmann.  
+This repository contains data and code for the manuscript "Non-Invasive Brain Stimulation Modulates Performance Monitoring in Patients With Obsessive-Compulsive Disorder" by Luisa Balzus, Julia Klawohn, Björn Elsner, Sein Schmidt, Stephan A. Brandt, and Norbert Kathmann.  
 
 &nbsp;
   

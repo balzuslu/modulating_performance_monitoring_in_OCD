@@ -17,7 +17,7 @@ This site contains analysis code and results of statistical analyses for the man
 <font size="4">**Non-Invasive Brain Stimulation Modulates Performance Monitoring in Patients With Obsessive-Compulsive Disorder**</font>
 <br><br>
 
-by Luisa Balzus, Julia Klawohn, Sein Schmidt, Stephan A. Brandt, and Norbert Kathmann
+by Luisa Balzus, Julia Klawohn, Björn Elsner, Sein Schmidt, Stephan A. Brandt, and Norbert Kathmann
 
 <br>
 
