@@ -498,7 +498,7 @@ ggsave(plot = figure_ERN_CRN, "./figures/figure_ERN_CRN.tiff", width = 20, heigh
 ## Pe
 ***
 
-This figure corresponds to Figure 2 in the manuscript.
+This figure corresponds to Figure S1 in the supplemental material.
 
 ```{r arrange-plots-Pe, fig.width = 8, fig.height = 4, cache = knitr_cache_enabled, dpi = 600, fig.cap = "Note. (A) Response-locked grand average waveforms with 95% confidence intervals (CIs) for incorrect responses at electrode site Pz in the sham and cathodal tDCS condition for patients with OCD and HC participants, along with topographies of the Pe (200–400 ms). Gray-shaded areas in the waveform plots indicate the time window used for Pe quantification. (B) Pe mean amplitude values per group and tDCS condition are presented as boxplots and probability density plots based on raw data. (C) Predicted Pe mean amplitude values by group and tDCS condition, calculated as partial effects from linear mixed models. Error bars represent 95% CIs."}
 
