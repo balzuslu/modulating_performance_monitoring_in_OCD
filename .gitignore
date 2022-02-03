@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+*.docx
 data/*.sav
 renv/
 2_Behavioral_Data_cache
