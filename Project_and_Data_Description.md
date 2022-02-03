@@ -31,7 +31,7 @@ Project and Data Description
 - We expected that inhibitory pre-SMA stimulation by cathodal tDCS would reduce performance monitoring processes, leading to increased error rates and attenuated behavioral adaptation after error commission, that is, reduced post-error slowing (PES).
 &nbsp;
 
-- In addition, we hypothesized that compared to sham tDCS, cathodal tDCS would reduce the error-related negativity (ERN) amplitude and increase the error positivity (Pe) amplitude. 
+- In addition, we hypothesized that compared to sham tDCS, cathodal tDCS would reduce the error-related negativity (ERN) amplitude. 
 &nbsp;
 
 - Regarding group differences, we predicted increased ERN amplitudes in patients with OCD compared to healthy participants in the sham condition. 
@@ -41,13 +41,16 @@ Project and Data Description
 &nbsp;
 
 - To explore effects of tDCS on performance monitoring during correct responses, we additionally analyzed the correct-response negativity (CRN). 
+&nbsp;
+
+- Moreover, we examined whether cathodal tDCS would increase the amplitude of the error positivity (Pe).
 
 &nbsp;
 
 ## Preregistration
 &nbsp;
 
-- Hypotheses, experimental design, sample size, and analysis plan of this study were preregistered on the Open Science Framework (https://osf.io/fmu4n/).
+- Hypotheses, experimental design, sample size, and analysis plan of this study were preregistered on the Open Science Framework (https://osf.io/7z8hj/).
 
 &nbsp;
 
@@ -66,7 +69,7 @@ Project and Data Description
 | session                                    	        | Experimental session                                                                    | T1 = first experimental session <br> T2 = second experimental session                                |
 | stimulation                                    	| Stimulation condition                                                                   | verum = cathodal tDCS <br> sham = placebo tDCS                                                       |
 | trial                                         	| Trial number within the flanker task                                                    | 1 to 480 per participant and session                                                                 |
-| stimulus_type                                         | Stimulus type in the flanker task                                                       | congruent = congurent stimulus <br> incongruent = incongruent stimulus                               |
+| stimulus_type                                         | Stimulus type in the flanker task                                                       | congruent = congruent stimulus <br> incongruent = incongruent stimulus                               |
 | response_type                             	        | Response type in the flanker task                                                       | correct = correct response <br> incorrect = incorrect response <br> miss = missing response          |
 | rt                                        	        | RT in the flanker task                                                                  | RT in milliseconds <br> NAs for trials in which no response was made (miss)                          |
 | rt_log                                	        | Log-transformed RT in the flanker task                                                  | log(RT) in milliseconds <br> NAs for trials in which no response was made (miss)                     |
