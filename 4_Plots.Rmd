@@ -523,3 +523,12 @@ figure_Pe
 ggsave(plot = figure_Pe, "./figures/figure_Pe.tiff", width = 20, height = 12,
        units = "cm", dpi = 600, compression = "lzw")
 ```
+<br><br>
+
+## Session Info
+***
+
+```{r session-info}
+
+sessionInfo()
+```
