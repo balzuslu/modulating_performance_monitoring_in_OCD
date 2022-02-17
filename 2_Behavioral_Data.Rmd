@@ -395,7 +395,7 @@ control = glmerControl(optimizer = "bobyqa")
 tab_model(GLMM_accuracy,
   dv.labels = "Accuracy", pred.labels = labels, show.stat = TRUE, show.icc = FALSE, show.r2 = FALSE,
   show.re.var = FALSE, show.ngroups = FALSE, minus.sign = "−", string.pred = "Fixed effects", 
-  string.est = "b", string.stat = "z", string.ci = "95 % CI", title = "Results of the Binomial GLMM 
+  string.est = "Odds ratio", string.stat = "z", string.ci = "95 % CI", title = "Results of the Binomial GLMM 
   Predicting Response Accuracy as a Function of Stimulation Condition (Cathodal - Sham) and 
   Group (OCD - Healthy Controls)"
 )
