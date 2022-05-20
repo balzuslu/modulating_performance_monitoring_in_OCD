@@ -28,22 +28,22 @@ Project and Data Description
 ## Hypotheses 
 &nbsp; 
 
-- We expected that inhibitory pre-SMA stimulation by cathodal tDCS would reduce performance monitoring processes, leading to increased error rates and attenuated behavioral adaptation after error commission, that is, reduced post-error slowing (PES).
+- Our primary hypothesis was that compared to sham tDCS, cathodal tDCS would reduce the error-related negativity (ERN) amplitude across healthy individuals and patients with OCD.
 &nbsp;
 
-- In addition, we hypothesized that compared to sham tDCS, cathodal tDCS would reduce the error-related negativity (ERN) amplitude. 
+- In addition, we expected that if inhibitory pre-SMA stimulation by cathodal tDCS attenuates performance monitoring processes, error rates would be increased and behavioral adaptation after error commission, that is, post-error slowing (PES), would be reduced. 
+&nbsp;
+
+- Moreover, we predicted that cathodal tDCS would increase the amplitude of the error positivity (Pe). 
+&nbsp;
+
+- To explore effects of cathodal tDCS on performance monitoring during correct responses, we additionally analyzed the correct-response negativity (CRN). 
 &nbsp;
 
 - Regarding group differences, we predicted increased ERN amplitudes in patients with OCD compared to healthy participants in the sham condition. 
 &nbsp;
 
-- We expected the ERN attenuation to be more pronounced in the patient group compared to the control group. 
-&nbsp;
-
-- To explore effects of tDCS on performance monitoring during correct responses, we additionally analyzed the correct-response negativity (CRN). 
-&nbsp;
-
-- Moreover, we examined whether cathodal tDCS would increase the amplitude of the error positivity (Pe).
+- We expected the tDCS-induced ERN attenuation to be more pronounced in the patient group compared to the control group.
 
 &nbsp;
 
